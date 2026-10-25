@@ -330,7 +330,7 @@ $('loadSounding').onclick=async()=>{
   let raw=await response.text(),rows;
   try{rows=csvToRows(raw)}catch(_){rows=wyomingListToRows(raw)}
   if(rows.length<5)throw Error('Datendienst liefert nur '+rows.length+' auswertbare Höhenstufen. Antwortbeginn: '+raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,170));
-  useSounding(rows,'University of Wyoming, '+st[1]+', '+date+' '+hour+':00 UTC');
+  try{useSounding(rows,'University of Wyoming, '+st[1]+', '+date+' '+hour+':00 UTC')}catch(validationError){throw Error(validationError.message+' · Eingelesene Zeilen: '+rows.length+' · Erste Zeilen: '+JSON.stringify(rows.slice(0,3))+' · Serverantwort: '+raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160))}
   const km=locationResult?Math.round(kmDistance(locationResult.latitude,locationResult.longitude,st[2],st[3])):null;
   $('autoStatus').textContent=`Messung geladen: ${st[1]} (WMO ${id}), ${date} ${hour}:00 UTC · ${sounding.length} Höhenstufen`+(km!==null?` · ${km} km vom Suchort`:'')+'. Keine örtliche Echtzeitmessung.';
  }catch(e){
