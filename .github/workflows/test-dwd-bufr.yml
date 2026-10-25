@@ -32,8 +32,25 @@ jobs:
           done
       - name: Decode and preserve JSON output
         run: |
-          bufr_dump -j -p sample.bin > decoded.json
-          du -h decoded.json
+          echo 'Try standard JSON decoding and retain stderr:'
+          set +e
+          bufr_dump -j sample.bin > decoded.json 2> decode-errors.log
+          status=$?
+          echo "bufr_dump exit status: $status"
+          cat decode-errors.log
+          ls -lh decoded.json || true
+          echo 'Try per-message decode and report errors:'
+          mkdir -p message-diagnostics
+          bufr_copy sample.bin 'message-diagnostics/msg_[count].bufr' 2>&1 || true
+          for f in message-diagnostics/*.bufr; do
+            [ -f "$f" ] || continue
+            echo "Decoding $f"
+            bufr_dump -j "$f" > "$f.json" 2> "$f.error"
+            echo "status=$?"
+            head -c 500 "$f.error" || true
+            echo
+          done
+          exit 0
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -42,4 +59,6 @@ jobs:
           path: |
             sample.bin
             decoded.json
+            decode-errors.log
+            message-diagnostics/
           if-no-files-found: warn
