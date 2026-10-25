@@ -34,10 +34,13 @@ jobs:
         run: |
           echo 'Try standard JSON decoding and retain stderr:'
           set +e
-          bufr_dump -j sample.bin > decoded.json 2> decode-errors.log
+          bufr_dump -j f sample.bin > decoded.json 2> decode-errors.log
           status=$?
           echo "bufr_dump exit status: $status"
           cat decode-errors.log
+          echo 'Decoded JSON preview:'
+          head -c 1200 decoded.json || true
+          echo
           ls -lh decoded.json || true
           echo 'Try per-message decode and report errors:'
           mkdir -p message-diagnostics
@@ -45,7 +48,7 @@ jobs:
           for f in message-diagnostics/*.bufr; do
             [ -f "$f" ] || continue
             echo "Decoding $f"
-            bufr_dump -j "$f" > "$f.json" 2> "$f.error"
+            bufr_dump -j f "$f" > "$f.json" 2> "$f.error"
             echo "status=$?"
             head -c 500 "$f.error" || true
             echo
