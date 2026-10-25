@@ -283,22 +283,24 @@ function useSounding(rows,description){
 }
 function csvToRows(raw){
  const plain=raw.replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;|&#160;/gi,' ');
- let lines=plain.trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- let headIdx=lines.findIndex(line=>/height_m|HGHT|pressure_hpa/i.test(line));
+ let lines=plain.replace(/^\uFEFF/,'').trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const normalize=h=>h.trim().replace(/^"|"$/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const known=['heightm','geopotentialheightm','hght','pressurehpa','pres','temperaturec','tempc','temp','dewpointtemperaturec','dewpointc','dwpt'];
+ let headIdx=lines.findIndex(line=>{const n=normalize(line);return known.some(k=>n.includes(k))&&(/,|;|\s{2,}/.test(line));});
  if(headIdx<0)throw Error('CSV-Kopfzeile nicht gefunden.');
  lines=lines.slice(headIdx);
  const header=lines.shift();
  const sep=header.includes(';')?';':header.includes(',')?',':null;
  const split=line=>sep?line.split(sep):line.trim().split(/\s+/);
- const headers=split(header).map(x=>x.trim().replace(/^"|"$/g,'').toLowerCase());
- const aliases=[['height_m','hght','height'],['pressure_hpa','pres','pressure'],['temp_c','temp','temperature'],['dewpoint_c','dwpt','dewpoint']];
+ const headers=split(header).map(normalize);
+ const aliases=[['heightm','geopotentialheightm','hght','height'],['pressurehpa','pres','pressure'],['temperaturec','tempc','temp','temperature'],['dewpointtemperaturec','dewpointc','dwpt','dewpoint']];
  const ids=aliases.map(group=>headers.findIndex(h=>group.includes(h)));
- if(ids.some(i=>i<0))throw Error('CSV benötigt Höhe, Druck, Temperatur und Taupunkt.');
+ if(ids.some(i=>i<0))throw Error('CSV benötigt Höhe, Druck, Temperatur und Taupunkt. Erkannte Spalten: '+headers.join(', '));
  return lines.map(line=>{
   const v=split(line).map(x=>x.trim().replace(/^"|"$/g,''));
   const n=i=>Number(v[i]?.replace(',','.'));
   return {z:n(ids[0]),p:n(ids[1])*100,T:n(ids[2])+273.15,Td:n(ids[3])+273.15};
- });
+ }).filter(r=>Number.isFinite(r.z)&&Number.isFinite(r.p)&&Number.isFinite(r.T)&&Number.isFinite(r.Td)&&r.p>0&&r.z>-500&&r.z<50000&&r.T>150&&r.T<340&&r.Td>130&&r.Td<=r.T+0.5);
 }
 function wyomingListToRows(raw){
  const text=raw.replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/pre\s*>/gi,'\n').replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/gi,' ');
