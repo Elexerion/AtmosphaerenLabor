@@ -317,6 +317,7 @@ function wyomingListToRows(raw){
 function sourceURL(id,date,hour,kind='TEXT:CSV'){
  return `https://weather.uwyo.edu/wsgi/sounding?datetime=${date}%20${hour}%3A00%3A00&id=${id}&type=${encodeURIComponent(kind)}`;
 }
+window.setDownloadStatus=message=>{const el=document.getElementById('autoStatus');if(el){const status=document.getElementById('downloadStatus')||document.createElement('div');status.id='downloadStatus';status.style.marginTop='8px';status.textContent=message;el.appendChild(status);}};
 const nowUTC=new Date();nowUTC.setUTCHours(nowUTC.getUTCHours()>=14?12:0,0,0,0);
 if(nowUTC.getTime()>Date.now()-2*3600000)nowUTC.setUTCHours(nowUTC.getUTCHours()-12);
 $('launchDate').value=nowUTC.toISOString().slice(0,10);$('launchHour').value=String(nowUTC.getUTCHours()).padStart(2,'0');
