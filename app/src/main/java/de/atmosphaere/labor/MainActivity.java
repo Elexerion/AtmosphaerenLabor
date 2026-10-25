@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle b){super.onCreate(b);web=new WebView(this);setContentView(web);
  web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);
  web.setWebChromeClient(new WebChromeClient(){@Override public boolean onShowFileChooser(WebView w,ValueCallback<Uri[]> cb,FileChooserParams p){chooser=cb;try{startActivityForResult(p.createIntent(),1);return true;}catch(Exception e){chooser=null;cb.onReceiveValue(null);return false;}}});
- web.setWebViewClient(new WebViewClient(){@Override public WebResourceResponse shouldInterceptRequest(WebView w,WebResourceRequest r){
+ web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest r){Uri u=r.getUrl();if("appassets.androidplatform.net".equals(u.getHost()))return false;if("https".equals(u.getScheme())){try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}return true;}@Override public WebResourceResponse shouldInterceptRequest(WebView w,WebResourceRequest r){
  Uri u=r.getUrl();if(!"appassets.androidplatform.net".equals(u.getHost()))return null;
  try{if(u.getPath().equals("/index.html"))return new WebResourceResponse("text/html","UTF-8",getAssets().open("index.html"));
  if(u.getPath().equals("/api/sounding")){String station=u.getQueryParameter("station"),date=u.getQueryParameter("date"),hour=u.getQueryParameter("hour");
