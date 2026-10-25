@@ -334,7 +334,7 @@ $('loadSounding').onclick=async()=>{
   const km=locationResult?Math.round(kmDistance(locationResult.latitude,locationResult.longitude,st[2],st[3])):null;
   $('autoStatus').textContent=`Messung geladen: ${st[1]} (WMO ${id}), ${date} ${hour}:00 UTC · ${sounding.length} Höhenstufen`+(km!==null?` · ${km} km vom Suchort`:'')+'. Keine örtliche Echtzeitmessung.';
  }catch(e){
-  $('autoStatus').textContent='Automatischer Abruf fehlgeschlagen: '+e.message+'. Bitte Internetverbindung, Stationskennung und Messzeit prüfen.';
+  $('autoStatus').replaceChildren(document.createTextNode('Automatischer Abruf fehlgeschlagen: '+e.message+'. '));const fallback=document.createElement('a');fallback.href=url;fallback.target='_blank';fallback.rel='noopener noreferrer';fallback.textContent='Messdaten sicher im Browser herunterladen';fallback.style.cssText='display:inline-block;margin:8px 0;color:#75c8ff;text-decoration:underline';$('autoStatus').append(fallback,document.createTextNode(' · Anschließend die heruntergeladene Datei über „Radiosonde importieren“ auswählen.'));
  }
 };
 $('soundingFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const raw=await f.text();let rows;try{rows=csvToRows(raw)}catch(_){rows=wyomingListToRows(raw)}if(rows.length<5)throw Error('Datei enthält weniger als fünf auswertbare Höhenstufen.');useSounding(rows,'lokale CSV '+f.name);$('autoStatus').textContent='Lokale CSV geladen (keine verifizierte Stations- oder Zeitangabe).';$('sourceMeta').textContent='Quelle: Nutzerdatei '+f.name+'; Stations- und Startmetadaten nicht geprüft.'}catch(err){$('soundingStatus').textContent='Importfehler: '+err.message}});
