@@ -1,0 +1,336 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atmosphärische Stabilität – 3D-Labor</title><style>
+:root{color-scheme:dark;}*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#e5edf8;font:calc(14px * 1) system-ui,-apple-system,Segoe UI,sans-serif}header{padding:22px max(18px,calc((100vw - 1300px)/2));border-bottom:1px solid #28374b}h1{font-size:calc(25px * 1);margin:0 0 7px}h2{font-size:calc(17px * 1);margin:0 0 12px}p{line-height:1.5;color:#a9bdd3;margin:5px 0}.wrap{max-width:1300px;margin:auto;padding:18px;display:grid;grid-template-columns:290px 1fr;gap:15px}.panel{background:#141f30;border:1px solid #304258;border-radius:13px;padding:17px;min-width:0}.controls{grid-row:span 2}.control{margin:15px 0}.control label{display:flex;justify-content:space-between;gap:10px;margin-bottom:7px}.control output{font-weight:700;color:#90d4ff}input[type=range]{width:100%;accent-color:#49a7eb}button{background:#243b55;color:#e5edf8;border:1px solid #47647e;padding:9px 13px;border-radius:8px;cursor:pointer}button:hover{background:#31516e}.plots{display:grid;grid-template-columns:1fr 1fr;gap:15px}.wide{grid-column:1/-1}canvas{width:100%;height:auto;display:block;touch-action:none}#surface{cursor:grab}#surface:active{cursor:grabbing}.legend{display:flex;flex-wrap:wrap;gap:12px;margin:9px 0;color:#b8c9d9;font-size:calc(12px * 1)}.sw{display:inline-block;width:17px;height:3px;vertical-align:middle;margin-right:5px}.viewtools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.perspectiveToggle{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #47647e;border-radius:8px;cursor:pointer}.perspectiveToggle input{accent-color:#49a7eb}.viewtools span{color:#9eb2c7;font-size:calc(12px * 1)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.metric{background:#1c2d42;padding:10px;border-radius:8px}.metric b{display:block;font-size:calc(18px * 1);margin-top:4px}.metric small{color:#9eb2c7}.validation{font-size:calc(12px * 1);line-height:1.55;color:#c4d4e4}.validation div{padding:5px 0;border-bottom:1px solid #304258}.validation strong{color:#b2e8c5}footer{max-width:1300px;margin:auto;padding:0 18px 25px;color:#a9bdd3;line-height:1.6}@media(max-width:900px){.wrap{grid-template-columns:1fr}.controls{grid-row:auto}.plots{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+input[type=text],input[type=date],#stationSelect,#launchHour{width:100%;background:#20354c;border:1px solid #496680;color:#edf5ff;border-radius:7px;padding:9px;margin:5px 0 10px}#autoSound label{display:block;margin-top:8px;color:#c9d8e7}#sourceMeta{overflow-wrap:anywhere}#sourceMeta a{color:#8ad0ff}
+#surfacePanel.fullview{position:fixed;inset:0;z-index:1000;background:#0b1220;border-radius:0;overflow:auto;padding:12px;display:flex;flex-direction:column}
+#surfacePanel.fullview #surface{width:100%;height:calc(100dvh - 185px);min-height:300px;object-fit:contain;flex:1;min-height:0}
+#surfacePanel.fullview .viewtools{flex-shrink:0}#surfacePanel.fullview .legend{flex-shrink:0}
+body.viewlocked{overflow:hidden}.viewtools button svg{vertical-align:middle}
+#surfacePanel.fullview>p{display:none}#surfacePanel.fullview>h2{margin:0 0 6px}
+@media(max-width:700px){#surfacePanel.fullview #surface{height:calc(100dvh - 235px)}#surfacePanel.fullview .viewtools{gap:4px}#surfacePanel.fullview .viewtools label{font-size:calc(11px * 1)}}
+</style></head><body><header><h1>Atmosphärisches Stabilitätslabor · 3D + Modellvalidierung · Android</h1><p>Parametrische Auftriebsfläche, Temperatur-/Taupunktprofil und CAPE/CIN – mit höhenabhängiger Umgebungsfeuchte und korrigierter Energieintegration.</p></header><main class="wrap"><section class="panel controls"><h2>Atmosphärische Randbedingungen</h2><div class="control" id="autoSound"><h2>Radiosonde automatisch abrufen</h2><label for="placeInput">Standort / Fluggebiet</label><input id="placeInput" type="text" value="Flensburg" placeholder="z. B. Flensburg, Hamburg, Berlin"><div class="viewtools"><button type="button" id="findStation">Station suchen</button><button type="button" id="loadSounding">Messung laden</button></div><label for="stationSelect">Radiosondenstation</label><select id="stationSelect"></select><label for="launchDate">Startdatum (UTC)</label><input type="date" id="launchDate"><label for="launchHour">Startzeit (UTC)</label><select id="launchHour"><option value="00">00 UTC</option><option value="12">12 UTC</option></select><div id="autoStatus" class="validation" aria-live="polite">Noch keine Messung abgerufen.</div><div id="sourceMeta" class="validation"></div><p>Standortsuche: Open-Meteo Geocoding. Ballondaten: Universität Wyoming, archivierte Radiosondenaufstiege (WMO-Stationen). Keine Modellvorhersage und keine flächendeckende Messung. Automatischer Abruf über den integrierten Android-Datendienst; Internetverbindung erforderlich.</p></div><div class="control"><label for="soundingFile">Radiosonde importieren (CSV)</label><input type="file" id="soundingFile" accept=".csv,.txt,text/csv" style="max-width:100%"><button id="soundingOff" type="button" style="margin-top:8px">Zurück zum Idealprofil</button><div id="soundingStatus" class="validation">Idealisiertes Atmosphärenprofil aktiv.</div><p>CSV-Spalten: <code>height_m,pressure_hpa,temp_c,dewpoint_c</code>; optional <code>wind_dir_deg,wind_speed_ms</code>. Höhen in m über MSL. Alternativ zum automatischen Abruf.</p></div><div id="sliders"></div><button id="reset">Ausgangswerte zurücksetzen</button><p style="margin-top:17px">Die Umgebung besitzt einen konstanten vertikalen Temperaturgradienten und ein exponentiell abnehmendes Feuchte-Mischungsverhältnis. Das Luftpaket startet am Boden und steigt ohne Einmischung auf.</p><p>Die Oberfläche zeigt den Auftrieb für verschiedene Umgebungsgradienten und Druckniveaus. Die gelbe Linie ist das aktuell ausgewählte Profil. Die Farbskala reicht von Grün (negativer Auftrieb) bis Rot (positiver Auftrieb).</p></section><section class="panel" id="surfacePanel"><h2>3D-Kennfeld: Auftriebsbeschleunigung</h2><canvas id="surface" width="960" height="650"></canvas><div class="viewtools"><button id="fullView" title="3D-Kennfeld auf Bildschirmgröße vergrößern" aria-label="3D-Kennfeld vergrößern">🔍 Vollbild</button><label class="perspectiveToggle"><input type="checkbox" id="showThresholds" checked> Kipppunkte</label><label class="perspectiveToggle" for="textSize">3D-Beschriftung <input id="textSize" type="range" min="70" max="200" step="5" value="100" style="width:110px"><output id="textSizeValue">100 %</output></label><button id="viewReset">Ansicht zentrieren</button><button id="zoomIn">Zoom +</button><button id="zoomOut">Zoom −</button><label class="perspectiveToggle"><input type="checkbox" id="perspective" checked> Perspektive</label><label class="perspectiveToggle" for="focal">Perspektivstärke <input id="focal" type="range" min="4" max="24" step="1" value="10" style="width:115px;vertical-align:middle"><output id="focalValue">10</output></label><label class="perspectiveToggle" for="mesh">Netzauflösung <select id="mesh" style="background:#243b55;color:white;padding:4px"><option value="24">Grob</option><option value="48">Mittel</option><option value="80" selected>Fein</option><option value="120">Sehr fein</option></select></label><label class="perspectiveToggle" for="lighting">Beleuchtung <input id="lighting" type="range" min="0" max="100" value="75" step="5" style="width:100px"><output id="lightingValue">75 %</output></label><label class="perspectiveToggle"><input type="checkbox" id="specular" checked> Glanzlicht</label><label class="perspectiveToggle"><input type="checkbox" id="stormColors" checked> Gewitterpotenzial violett</label><span id="zoomLabel">100 %</span></div><div class="legend"><span><i class="sw" style="background:#39bd70"></i>Stabil / negativer Auftrieb</span><span><i class="sw" style="background:#e34d3e"></i>Labil / positiver Auftrieb</span><span><i class="sw" style="background:#fff09b"></i>Gewähltes Profil</span><span><i class="sw" style="background:#a653db"></i>Violett: CAPE-/Scherungssignal, kein Gewitternachweis</span></div><p>Linke Maustaste / ein Finger: frei um 360° drehen (auch unter die Fläche). Rechte Maustaste / zwei Finger: verschieben. Mausrad / Zweifinger-Pinch: zoomen. Doppelklick: Ansicht zurücksetzen. Perspektive per Schalter ein-/ausschalten und Perspektivstärke einstellen. Die Netzauflösung ist wählbar. Beleuchtung und gerichtete Glanzlichter lassen sich einstellen. Achsen: Umgebungstemperaturgradient (°C/100 m), Luftdruck (hPa), Auftrieb (m/s²). Grün: stabil (negativer Auftrieb), Rot: labil (positiver Auftrieb).</p></section><section class="panel"><h2>Ausgewählter Zustand</h2><div class="metrics" id="metrics"></div><div class="legend"><span><i class="sw" style="background:#ffb451"></i>Temperatur Luftpaket</span><span><i class="sw" style="background:#62c5ff"></i>Temperatur Umgebung</span><span><i class="sw" style="background:#a5e39e"></i>Taupunkt Luftpaket</span></div><p id="summary"></p><h2 style="margin-top:18px">Konvektives Gewitterpotenzial (Modell)</h2><div id="storm" class="validation" aria-live="polite"></div><h2 style="margin-top:18px">Numerische Prüfungen (Referenzvergleich)</h2><div id="validation" class="validation"></div></section><section class="plots wide"><div class="panel"><h2>Temperaturprofil und Kondensationsniveau</h2><canvas id="temp" width="780" height="560"></canvas><p>Alle Kurven gegen Höhe über Modellboden; der Taupunkt gilt für das aufsteigende Luftpaket.</p></div><div class="panel"><h2>Auftrieb und Energieflächen</h2><canvas id="buoy" width="780" height="560"></canvas><p>Positive Flächen ergeben CAPE, negative Flächen bis zum LFC die CIN (vereinfachte Parcel-Methode).</p></div></section><section class="panel wide"><h2>Windprofil und vertikale Windscherung</h2><canvas id="wind" width="900" height="370" style="width:100%;height:auto;max-height:370px"></canvas><p>Vereinfachtes lineares Windvektorprofil zwischen Boden und 6 km. Die Richtung bezeichnet die meteorologische Herkunftsrichtung. Das Windprofil beeinflusst die 3D-Auftriebsfläche nicht, sondern ergänzt die qualitative Konvektionsanalyse.</p></section></main><footer><b>Modellgrenzen:</b> Ideales Gas, hydrostatisches Gleichgewicht, konstante Umgebungs-Temperaturabnahme, exponentiell mit der Höhe abnehmendes Feuchte-Mischungsverhältnis der Umgebung, pseudoadiabatischer Aufstieg des gesättigten Pakets, keine Entrainment-/Eisphasenprozesse. Die Windscherung wird separat aus einem idealisierten Windprofil berechnet, ohne dynamische Kopplung an den Auftrieb. Die 3D-Fläche verwendet ein wählbares, feineres Rechengitter und maskiert Druckniveaus außerhalb der berechneten Profilhöhe; der Druck ist für jeden Gradienten hydrostatisch berechnet; er ist nicht eine unabhängig wählbare Zustandsvariable. Die Referenzprüfung vergleicht mit analytischer Poisson- und Bolton-Näherung sowie hydrostatischem Residuum. Eine unabhängige MetPy-Validierung ist noch ausstehend. Radiosondenimport erfolgt wahlweise automatisch von Wyoming oder lokal per CSV. Die Android-App ruft Radiosondendaten über einen integrierten nativen HTTPS-Adapter ab. Violett codiert nur einen heuristischen CAPE-/Scherungsindikator bei positivem Auftrieb, keine Gewitterwahrscheinlichkeit. Die Konvektionsbewertung verwendet CAPE/CIN, 0–6-km-Bulk-Shear und eine idealisierte Hebung, ist aber weder eine Prognose noch eine Wahrscheinlichkeit. Interne Prüfungen vergleichen die trockene Adiabate mit der Poisson-Gleichung und das LCL mit der Bolton-Näherung; das ist keine unabhängige Validierung gegen MetPy oder Messdaten. CAPE/CIN und LFC/EL sind Näherungswerte; CAPE wird erst oberhalb des LFC und bis zum EL integriert und kein Ersatz für ein Radiosonden-Skew-T oder eine Flugwetterberatung. Bei hoher Anfangsfeuchte kann das LCL am Boden liegen. Ein reales Sounding hat meist variable Gradienten und komplexe Feuchteschichten. Die 3D-Fläche ist eine Modell-Sensitivitätsanalyse, kein Radiosondenprofil.</footer><script>
+const g=9.80665,Rd=287.05,Rv=461.5,cp=1004.0,eps=Rd/Rv,Lv=2.5e6;
+const defs=[['t0','Bodentemperatur',15,-15,35,1,'°C'],['td0','Taupunkt am Boden',8,-25,30,1,'°C'],['gamma','Umgebungsgradient',0.65,-0.2,1.4,0.05,'°C/100 m'],['top','Maximale Höhe',9000,3000,15000,500,'m'],['p0','Bodendruck',1013,900,1050,1,'hPa'],['rhDecay','Feuchte-Abnahme der Umgebung',2000,500,8000,250,'m'],['wind0','Bodenwind Geschwindigkeit',5,0,30,1,'m/s'],['windDir0','Bodenwind Richtung (aus)',220,0,350,10,'°'],['wind6','Wind in 6 km Geschwindigkeit',25,0,65,1,'m/s'],['windDir6','Wind in 6 km Richtung (aus)',260,0,350,10,'°'],['lift','Erzwungene Hebung',0,0,3000,100,'m']];let state={};const sliders=document.getElementById('sliders');for(const [id,label,val,min,max,step,unit] of defs){state[id]=val;const div=document.createElement('div');div.className='control';div.innerHTML=`<label for="${id}">${label}<output id="o_${id}"></output></label><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}">`;sliders.append(div);document.getElementById(id).addEventListener('input',e=>{state[id]=+e.target.value;if(id==='t0'&&state.td0>state.t0){state.td0=state.t0;document.getElementById('td0').value=state.td0}if(id==='td0'&&state.td0>state.t0){state.td0=state.t0;document.getElementById('td0').value=state.td0}render()})}document.getElementById('reset').onclick=()=>{for(const [id,,v] of defs){state[id]=v;document.getElementById(id).value=v}render()};
+function es(T){return 611.2*Math.exp(17.67*(T-273.15)/(T-29.65))}function mix(e,p){return eps*e/(p-e)}function eFromW(w,p){return p*w/(eps+w)}function dew(e){let l=Math.log(Math.max(1,e)/611.2);return 273.15+243.5*l/(17.67-l)}function tv(T,w){return T*(1+w/eps)/(1+w)}
+// Pseudoadiabatic parcel: Bolton saturation vapor pressure and variable moist lapse rate.
+// Environmental humidity decays exponentially in mixing ratio with altitude.
+let sounding=null, soundingBase=0;
+function interpSound(z,key){if(!sounding)return null;const a=sounding;if(z<=a[0].z)return a[0][key];if(z>=a[a.length-1].z)return a[a.length-1][key];let lo=0,hi=a.length-1;while(hi-lo>1){let mid=(lo+hi)>>1;if(a[mid].z<z)lo=mid;else hi=mid}let f=(z-a[lo].z)/(a[hi].z-a[lo].z);return a[lo][key]+f*(a[hi][key]-a[lo][key])}
+function profile(gamma){
+ const T0=(sounding?sounding[0].T:state.t0+273.15),td0=(sounding?sounding[0].Td:Math.min(state.td0,state.t0)+273.15),p0=(sounding?sounding[0].p:state.p0*100);
+ const w0=mix(es(td0),p0),dz=20;let p=p0,T=T0,lcl=null,rows=[];
+ for(let z=0;z<=state.top+0.01;z+=dz){
+  if(sounding&&z>sounding.at(-1).z)break;
+  if(sounding)p=interpSound(z,'p');
+  const Te=sounding?interpSound(z,'T')-(gamma-state.gamma)*z/100:T0-gamma*z/100;if(Te<175||p<1000)break;
+  const we=sounding?Math.min(mix(es(Math.min(Te,interpSound(z,'Td'))),p),mix(es(Te),p)*0.999):Math.min(w0*Math.exp(-z/state.rhDecay),mix(es(Te),p)*0.999);
+  const ws=mix(es(T),p),sat=w0>=ws;
+  if(sat&&lcl===null)lcl=z;
+  const wp=sat?ws:w0;
+  const B=g*(tv(T,wp)-tv(Te,we))/tv(Te,we);
+  rows.push({z,p,T,Te,Td:dew(eFromW(wp,p)),B,sat});
+  if(z+dz>state.top)break;
+  // Predictor-corrector for hydrostatic pressure, then moist/dry parcel lapse rate.
+  const TeMid=sounding?interpSound(z+dz/2,'T')-(gamma-state.gamma)*(z+dz/2)/100:T0-gamma*(z+dz/2)/100;
+  const pMid=sounding?interpSound(z+dz/2,'p'):p*Math.exp(-g*dz/2/(Rd*tv(TeMid,we)));
+  const wsMid=mix(es(T),pMid);
+  const moist=g*(1+Lv*wsMid/(Rd*T))/(cp+Lv*Lv*wsMid*eps/(Rd*T*T));
+  const rate=sat?moist:g/cp;
+  const Tnext=T-rate*dz;
+  // Use midpoint environmental virtual temperature for hypsometric integration.
+  const weMid=sounding?Math.min(mix(es(Math.min(TeMid,interpSound(z+dz/2,'Td'))),pMid),mix(es(TeMid),pMid)*0.999):Math.min(w0*Math.exp(-(z+dz/2)/state.rhDecay),mix(es(TeMid),pMid)*0.999);
+  p=sounding?interpSound(z+dz,'p'):p*Math.exp(-g*dz/(Rd*tv(TeMid,weMid)));T=Tnext;
+ }
+ return {rows,lcl};
+}
+function diagnostics(pro){
+ const a=pro.rows;let lfc=null,el=null,cape=0,cin=0;
+ if(a.length<2)return {lcl:pro.lcl,lfc,el,cape,cin};
+ // LFC: first transition to positive buoyancy at/above LCL; EL: subsequent positive-to-negative crossing.
+ const lcl=pro.lcl;
+ if(lcl===0&&a[0].B>=0)lfc=0;
+ for(let i=1;i<a.length;i++){
+  const u=a[i-1],v=a[i],dz=v.z-u.z;
+  if(lfc===null && lcl!==null && v.z>=lcl && u.B<=0 && v.B>0){
+   lfc=u.z+dz*(-u.B)/(v.B-u.B);lfc=Math.max(lfc,lcl);
+  }
+  if(lfc!==null && el===null && u.z>=lfc && u.B>=0 && v.B<0)
+   el=u.z+dz*u.B/(u.B-v.B);
+ }
+ // Integrate piecewise-linear buoyancy, splitting at zero crossings and LFC/EL boundaries.
+ function integral(z1,z2,positive){let sum=0;for(let i=1;i<a.length;i++){
+  let u=a[i-1],v=a[i],lo=Math.max(z1,u.z),hi=Math.min(z2,v.z);if(hi<=lo)continue;
+  const interp=z=>u.B+(v.B-u.B)*(z-u.z)/(v.z-u.z);
+  let cuts=[lo,hi];if(u.B*v.B<0){let zero=u.z+(v.z-u.z)*(-u.B)/(v.B-u.B);if(zero>lo&&zero<hi)cuts=[lo,zero,hi]}
+  for(let j=1;j<cuts.length;j++){let m=(interp(cuts[j-1])+interp(cuts[j]))/2;if((positive&&m>0)||(!positive&&m<0))sum+=m*(cuts[j]-cuts[j-1]);}
+ }return sum}
+ if(lfc!==null){cape=integral(lfc,el??a.at(-1).z,true);cin=integral(0,lfc,false)}
+ else cin=integral(0,a.at(-1).z,false);
+ return {lcl,lfc,el,cape,cin};
+}
+const canvas=(id)=>{let c=document.getElementById(id),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);return [c,ctx]};function line(ctx,points,color,width=2){if(!points.length)return;ctx.beginPath();ctx.moveTo(...points[0]);for(let i=1;i<points.length;i++)ctx.lineTo(...points[i]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke()}let textScale=1;function scaledFont(px){return `${Math.round(px)}px system-ui`}function txt(ctx,s,x,y,color='#dbe7f5',size=15){ctx.fillStyle=color;ctx.font=ctx.canvas.id==='surface'?`${Math.round(size*textScale)}px system-ui`:scaledFont(size);ctx.fillText(s,x,y)}function axis(ctx,x0,y0,x1,y1){ctx.strokeStyle='#91a9c2';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke()}
+function chart(pro,kind){let [c,ctx]=canvas(kind),a=pro.rows,W=c.width,H=c.height,left=82,right=W-26,top=27,bottom=H-55,yy=z=>bottom-z/state.top*(bottom-top);let vals=kind==='temp'?a.flatMap(r=>[r.T-273.15,r.Te-273.15,r.Td-273.15]):a.map(r=>r.B);let min=Math.floor(Math.min(...vals,kind==='buoy'?0:Infinity)/5)*5,max=Math.ceil(Math.max(...vals,kind==='buoy'?0:-Infinity)/5)*5;if(kind==='buoy'){min=Math.min(...vals,0);max=Math.max(...vals,0);let pad=Math.max(.01,(max-min)*.12);min-=pad;max+=pad}if(max<=min)max=min+1;const xx=v=>left+(v-min)/(max-min)*(right-left);ctx.fillStyle='#101b2a';ctx.fillRect(left,top,right-left,bottom-top);
+for(let j=0;j<=5;j++){let z=state.top*j/5,y=yy(z);line(ctx,[[left,y],[right,y]],'#283b50',1);txt(ctx,`${(z/1000).toFixed(1)} km`,9,y+5,'#a8bcd2',14)}for(let j=0;j<=5;j++){let v=min+(max-min)*j/5,x=xx(v);line(ctx,[[x,top],[x,bottom]],'#25374b',1);txt(ctx,kind==='temp'?v.toFixed(0):v.toFixed(2),x-13,bottom+24,'#b9c9d8',13)}axis(ctx,left,top,left,bottom);axis(ctx,left,bottom,right,bottom);txt(ctx,kind==='temp'?'Temperatur (°C)':'Auftrieb (m/s²)',W/2-70,H-12,'#e2eaf4',15);
+if(kind==='temp'){line(ctx,a.map(r=>[xx(r.Te-273.15),yy(r.z)]),'#62c5ff',3);line(ctx,a.map(r=>[xx(r.T-273.15),yy(r.z)]),'#ffb451',3);line(ctx,a.map(r=>[xx(r.Td-273.15),yy(r.z)]),'#a5e39e',2);if(pro.lcl!==null){let y=yy(pro.lcl);line(ctx,[[left,y],[right,y]],'#d8b1fb',1.5);txt(ctx,`LCL ${(pro.lcl/1000).toFixed(2)} km`,right-180,y-7,'#d8b1fb',14)}}else{let zero=xx(0);line(ctx,[[zero,top],[zero,bottom]],'#a3b5c7',1.5);for(let i=1;i<a.length;i++){let u=a[i-1],v=a[i],y1=yy(u.z),y2=yy(v.z);ctx.beginPath();ctx.moveTo(zero,y1);ctx.lineTo(xx(u.B),y1);ctx.lineTo(xx(v.B),y2);ctx.lineTo(zero,y2);ctx.closePath();ctx.fillStyle=(u.B+v.B)>=0?'#ffad4940':'#4c9fe240';ctx.fill()}line(ctx,a.map(r=>[xx(r.B),yy(r.z)]),'#f6e0a5',2.5);let d=diagnostics(pro);for(const [label,z,col] of [['LFC',d.lfc,'#ffcf77'],['EL',d.el,'#e9a5fa']])if(z!==null){let y=yy(z);line(ctx,[[left,y],[right,y]],col,1);txt(ctx,`${label} ${(z/1000).toFixed(2)} km`,right-160,y-7,col,14)}}}
+let az=-.55,el=.40,viewZoom=1,panX=0,panY=0, perspective=true;
+let lightPower=.75,gloss=true;
+document.getElementById('lighting').addEventListener('input',e=>{lightPower=+e.target.value/100;document.getElementById('lightingValue').textContent=e.target.value+' %';drawSurface()});
+document.getElementById('specular').addEventListener('change',e=>{gloss=e.target.checked;drawSurface()});
+const surf=document.getElementById('surface');
+const pointers=new Map();let gesture=null;
+function resetView(){az=-.55;el=.40;viewZoom=1;panX=0;panY=0;drawSurface()}
+function pos(e){let r=surf.getBoundingClientRect();return {x:(e.clientX-r.left)*surf.width/r.width,y:(e.clientY-r.top)*surf.height/r.height}}
+function gestureInfo(){let a=[...pointers.values()];if(a.length===0)return null;if(a.length===1)return {x:a[0].x,y:a[0].y,d:0};return {x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)}}
+surf.addEventListener('contextmenu',e=>e.preventDefault());
+surf.addEventListener('pointerdown',e=>{e.preventDefault();surf.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{...pos(e),button:e.button});gesture=gestureInfo()});
+surf.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;e.preventDefault();let old=gesture;pointers.set(e.pointerId,{...pos(e),button:pointers.get(e.pointerId).button});let next=gestureInfo();if(!old||!next){gesture=next;return}let dx=next.x-old.x,dy=next.y-old.y;if(pointers.size>=2){panX+=dx;panY+=dy;if(old.d>5&&next.d>5)viewZoom=Math.max(.35,Math.min(4.5,viewZoom*next.d/old.d))}else if([...pointers.values()][0].button===2 || (e.buttons&2)){panX+=dx;panY+=dy}else{az+=dx*.006;el+=-dy*.005}gesture=next;drawSurface()});
+function pointerEnd(e){pointers.delete(e.pointerId);gesture=gestureInfo()}
+surf.addEventListener('pointerup',pointerEnd);surf.addEventListener('pointercancel',pointerEnd);
+surf.addEventListener('wheel',e=>{e.preventDefault();viewZoom=Math.max(.35,Math.min(4.5,viewZoom*Math.exp(-e.deltaY*.0012)));drawSurface()},{passive:false});
+surf.addEventListener('dblclick',resetView);
+document.getElementById('viewReset').onclick=resetView;
+document.getElementById('perspective').addEventListener('change',e=>{perspective=e.target.checked;drawSurface()});
+document.getElementById('zoomIn').onclick=()=>{viewZoom=Math.min(4.5,viewZoom*1.25);drawSurface()};
+document.getElementById('zoomOut').onclick=()=>{viewZoom=Math.max(.35,viewZoom/1.25);drawSurface()};
+let cached=[];let cameraDistance=10;let meshResolution=80;
+document.getElementById("focal").addEventListener("input",e=>{cameraDistance=+e.target.value;document.getElementById("focalValue").textContent=cameraDistance;drawSurface()});
+document.getElementById("mesh").addEventListener("change",e=>{meshResolution=+e.target.value;buildMesh()});
+function drawSurface(){let [c,ctx]=canvas('surface'),W=c.width,H=c.height;
+ // All coordinates are projected relative to a common center; auto-fit ensures the full
+ // graph is visible at 100% zoom, including the lowest-pressure and lowest-buoyancy corners.
+ function raw(x,y,z){let X=(x-.6)/.8,Y=(y-650)/400,Z=Math.max(-1.5,Math.min(1.5,z/.18));let xx=X*Math.cos(az)-Y*Math.sin(az),depth=X*Math.sin(az)+Y*Math.cos(az);return [xx,depth*Math.sin(el)-Z*Math.cos(el),depth*Math.cos(el)+Z*Math.sin(el)]}
+ // Perspective projection: camera at positive view-depth; distant points appear smaller.
+
+ function camera(r){let f=perspective?cameraDistance/(cameraDistance+r[2]):1;return [r[0]*f,r[1]*f,r[2]]}
+ let bounds=[];for(let row of cached)for(let v of row)if(v)bounds.push(camera(raw(v.gam,v.p,v.B)));
+ for(let x of [-.2,1.4])for(let y of [300,1050])for(let z of [-.13,0,.13])bounds.push(camera(raw(x,y,z)));
+ let xMin=Math.min(...bounds.map(v=>v[0])),xMax=Math.max(...bounds.map(v=>v[0]));let yMin=Math.min(...bounds.map(v=>v[1])),yMax=Math.max(...bounds.map(v=>v[1]));
+ let baseScale=Math.min((W-140)/Math.max(.01,xMax-xMin),(H-140)/Math.max(.01,yMax-yMin));
+ function project(x,y,z){let r=camera(raw(x,y,z));return [W*.5+(r[0]-(xMin+xMax)/2)*baseScale*viewZoom+panX,H*.47+(r[1]-(yMin+yMax)/2)*baseScale*viewZoom+panY]}
+ let cells=[];for(let i=0;i<cached.length-1;i++)for(let j=0;j<cached[i].length-1;j++){let a=cached[i][j],b=cached[i+1][j],d=cached[i][j+1],e=cached[i+1][j+1];if(!a||!b||!d||!e)continue;let q=[a,b,e,d].map(v=>project(v.gam,v.p,v.B));let depth=[a,b,e,d].reduce((s,v)=>s+raw(v.gam,v.p,v.B)[2],0)/4;let avg=(a.B+b.B+d.B+e.B)/4;cells.push({q,depth,avg,vertices:[a,b,e,d],storm:(a.storm+b.storm+d.storm+e.storm)/4})}
+ cells.sort((a,b)=>b.depth-a.depth);
+ // Physically motivated directional illumination in the rotated view frame.
+ // Lambertian diffuse reflection plus a bounded Blinn-Phong highlight;
+ // illumination modulates brightness without replacing the stability hue.
+ const norm=v=>{let l=Math.hypot(...v)||1;return v.map(q=>q/l)};
+ const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+ const L=norm([-0.48,-0.70,1.0]),V=[0,0,-1],Hvec=norm([L[0]+V[0],L[1]+V[1],L[2]+V[2]]);
+ for(let cell of cells){ctx.beginPath();ctx.moveTo(...cell.q[0]);for(let k=1;k<4;k++)ctx.lineTo(...cell.q[k]);ctx.closePath();
+   const verts=cell.vertices.map(v=>raw(v.gam,v.p,v.B));
+   const e1=verts[1].map((v,i)=>v-verts[0][i]),e2=verts[3].map((v,i)=>v-verts[0][i]);
+   let n=norm(cross(e1,e2));if(n[2]>0)n=n.map(v=>-v); // upward-facing toward viewer convention
+   const diffuse=Math.abs(dot(n,L));
+   const spec=gloss?Math.pow(Math.abs(dot(n,Hvec)),26)*.38*lightPower:0;
+   const intensity=(1-lightPower)*.92+lightPower*(.52+.65*diffuse);
+   const k=Math.min(1,Math.abs(cell.avg)/.14);
+   let base=cell.avg>=0?[220+35*k,105-65*k,70-35*k]:[90-40*k,185+35*k,95-30*k];
+   if(document.getElementById('stormColors').checked&&cell.avg>0&&cell.storm>0){const q=Math.min(.9,cell.storm);base=base.map((v,i)=>v*(1-q)+[157,61,224][i]*q)}
+   const rgb=base.map(v=>Math.round(Math.min(255,Math.max(0,v*intensity+255*spec))));
+   ctx.fillStyle=`rgb(${rgb.join(',')})`;ctx.fill();
+   if(meshResolution<=48){ctx.strokeStyle='#ffffff10';ctx.lineWidth=.4;ctx.stroke()}
+ }
+ // Numeric axis ticks, projected into the same camera frame.
+ const axes=[{values:[-.2,0,.2,.4,.6,.8,1,1.2,1.4],point:v=>[v,1013,0],fmt:v=>v.toFixed(1),label:'Gradient °C/100 m'},
+ {values:[300,400,500,600,700,800,900,1000],point:v=>[-.2,v,0],fmt:v=>String(v),label:'Druck hPa'},
+ {values:[-.12,-.08,-.04,0,.04,.08,.12],point:v=>[-.2,1013,v],fmt:v=>v.toFixed(2),label:'Auftrieb m/s²'}];
+ for(let ax of axes){for(let v of ax.values){const q=project(...ax.point(v));ctx.beginPath();ctx.arc(q[0],q[1],2.4,0,2*Math.PI);ctx.fillStyle='#e5edf8';ctx.fill();txt(ctx,ax.fmt(v),Math.max(3,Math.min(W-55,q[0]+5)),Math.max(12,Math.min(H-3,q[1]-7)),'#c9daee',12)}let q=project(...ax.point(ax.values.at(-1)));txt(ctx,ax.label,Math.max(4,Math.min(W-180,q[0]-15)),Math.max(15,Math.min(H-5,q[1]+22)),'#e5edf8',15)}
+ // The B=0 contour marks the true stable/unstable tipping boundary.
+ // A second threshold indicates the start of the purple convective overlay.
+ if(document.getElementById('showThresholds').checked){
+  let contour=[];for(let j=0;j<cached[0].length;j++){for(let i=0;i<cached.length-1;i++){let a=cached[i][j],b=cached[i+1][j];if(!a||!b||a.B*b.B>0||a.B===b.B)continue;let f=-a.B/(b.B-a.B);contour.push({p:a.p,g:a.gam+f*(b.gam-a.gam)});break}}
+  contour.sort((a,b)=>b.p-a.p);if(contour.length>1){line(ctx,contour.map(q=>project(q.g,q.p,0)),'#ffffff',2.2);const stride=Math.max(1,Math.ceil(contour.length/6));for(let i=0;i<contour.length;i+=stride){let q=contour[i],pt=project(q.g,q.p,0);ctx.fillStyle='#071526d9';ctx.fillRect(pt[0]+5,pt[1]-20,86,17);txt(ctx,`B=0 · ${q.p.toFixed(0)} hPa`,pt[0]+8,pt[1]-7,'#ffffff',11)}}
+  const pro=profile(state.gamma), d=diagnostics(pro);for(let [key,z] of [['LCL',d.lcl],['LFC',d.lfc],['EL',d.el]]){if(z===null)continue;let r=pro.rows.reduce((best,r)=>Math.abs(r.z-z)<Math.abs(best.z-z)?r:best,pro.rows[0]);let q=project(state.gamma,r.p/100,r.B);ctx.fillStyle='#101a2bee';ctx.fillRect(q[0]+8,q[1]-20,110,18);txt(ctx,`${key} ${Math.round(r.p/100)} hPa`,q[0]+11,q[1]-7,'#fff5aa',12)}
+ }
+
+ let sel=profile(state.gamma).rows;line(ctx,sel.map(r=>project(state.gamma,r.p/100,r.B)),'#fff09b',5);
+ document.getElementById('zoomLabel').textContent=Math.round(viewZoom*100)+' %';
+}
+
+function stormShear(){function uv(s,d){let r=d*Math.PI/180;return [-s*Math.sin(r),-s*Math.cos(r)]}let a=uv(state.wind0,state.windDir0),b=uv(state.wind6,state.windDir6);return Math.hypot(a[0]-b[0],a[1]-b[1])}
+function buildMesh(){
+ const nx=meshResolution,ny=Math.round(meshResolution*1.25);
+ const profiles=[];
+ for(let i=0;i<=nx;i++){let gam=-.2+i*1.6/nx;const pr=profile(gam),dg=diagnostics(pr);
+  const shearVal=stormShear();const potential=Math.max(0,Math.min(1,(dg.cape-100)/1900))*Math.max(0,Math.min(1,(shearVal-5)/20))*Math.exp(-Math.abs(dg.cin)/200);
+  profiles.push({gam,rows:pr.rows,storm:potential,lfc:dg.lfc});}
+ cached=[];
+ for(const {gam,rows,storm,lfc} of profiles){let arr=[];
+  for(let j=0;j<=ny;j++){
+   const pTarget=(sounding?sounding[0].p/100:state.p0)-j*((sounding?sounding[0].p/100:state.p0)-300)/ny;
+   // No extrapolation below the model top: invalid points are masked.
+   if(pTarget<rows[rows.length-1].p/100-1e-8){arr.push(null);continue}
+   let lo=0,hi=rows.length-1;
+   while(hi-lo>1){let mid=(lo+hi)>>1;if(rows[mid].p/100>=pTarget)lo=mid;else hi=mid}
+   let a=rows[lo],b=rows[hi];
+   let f=Math.max(0,Math.min(1,(pTarget-a.p/100)/(b.p/100-a.p/100)));
+   arr.push({gam,p:pTarget,B:a.B+(b.B-a.B)*f,storm:lfc!==null&&a.z+(b.z-a.z)*f>=lfc?storm:0});
+  }
+  cached.push(arr);
+ }
+ drawSurface();
+}
+function validation(pro){
+ // Independent exact dry-adiabatic Poisson reference below the first saturated level.
+ const a=pro.rows, kappa=Rd/cp, T0=state.t0+273.15, p0=state.p0*100;
+ let dry=a.filter(r=>!r.sat && r.z>0);
+ let err=dry.length?Math.max(...dry.map(r=>Math.abs(r.T-T0*Math.pow(r.p/p0,kappa)))):null;
+ // Independent Bolton (1980) approximation for lifting condensation level temperature.
+ const td= Math.min(state.td0,state.t0)+273.15;
+ const Tlcl=1/(1/(td-56)+Math.log(T0/td)/800)+56;
+ const pLcl=p0*Math.pow(Tlcl/T0,1/kappa);
+ let lclRef=null;
+ for(let i=1;i<a.length;i++)if(a[i].p<=pLcl&&a[i-1].p>pLcl){let q=(pLcl-a[i-1].p)/(a[i].p-a[i-1].p);lclRef=a[i-1].z+q*(a[i].z-a[i-1].z);break}
+ const lclErr=pro.lcl!==null&&lclRef!==null?Math.abs(pro.lcl-lclRef):null;
+ // Hydrostatic finite-difference residual using model virtual temperatures.
+ let hydro=0;for(let i=1;i<a.length;i++){
+ const u=a[i-1],v=a[i],dz=v.z-u.z;
+ const we0=Math.min(mix(es(u.Te),u.p)*.999,mix(es(td),p0)*Math.exp(-u.z/state.rhDecay));
+ const we1=Math.min(mix(es(v.Te),v.p)*.999,mix(es(td),p0)*Math.exp(-v.z/state.rhDecay));
+ const Tv=(tv(u.Te,we0)+tv(v.Te,we1))/2;
+ const residual=Math.abs(Math.log(v.p/u.p)+g*dz/(Rd*Tv));hydro=Math.max(hydro,residual);
+ }
+ let passDry=err===null?'nicht prüfbar':err<0.5?'bestanden':'abweichend';
+ let passLcl=lclErr===null?'nicht prüfbar':lclErr<80?'bestanden':'abweichend';
+ document.getElementById('validation').innerHTML=`<div>Trockenadiabate vs. Poisson-Gleichung: <strong>${passDry}</strong> · max. ${err===null?'–':err.toFixed(3)+' K'}</div><div>LCL vs. Bolton-Näherung: <strong>${passLcl}</strong> · Differenz ${lclErr===null?'–':lclErr.toFixed(0)+' m'}</div><div>Hydrostatische Residuen: <strong>${hydro.toExponential(2)}</strong> (max. logarithmischer Schrittfehler)</div><div>Prüfstatus: interne Konsistenztests; keine externe MetPy-Referenzvalidierung. CAPE/CIN noch nicht unabhängig verifiziert.</div>`;
+}
+
+function drawWind(w0,w6,shear){
+ const [c,ctx]=canvas('wind'),W=c.width,H=c.height,cx=W/2,cy=H/2+8,scale=3.5;
+ ctx.fillStyle='#101b2a';ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle='#3a5167';ctx.lineWidth=1;
+ for(let v=-60;v<=60;v+=10){ctx.beginPath();ctx.moveTo(cx+v*scale,35);ctx.lineTo(cx+v*scale,H-35);ctx.stroke();ctx.beginPath();ctx.moveTo(35,cy-v*scale);ctx.lineTo(W-35,cy-v*scale);ctx.stroke()}
+ ctx.fillStyle='#a9c4dc';ctx.font=scaledFont(15);ctx.fillText('u / Ostkomponente (m/s) →',W-280,H-12);ctx.fillText('Nord ↑',16,22);
+ let coords=[];for(let k=0;k<=12;k++){let t=k/12,u=w0[0]+t*(w6[0]-w0[0]),v=w0[1]+t*(w6[1]-w0[1]);coords.push([cx+u*scale,cy-v*scale])}
+ line(ctx,coords,'#ffbf69',4);
+ coords.forEach((p,i)=>{ctx.beginPath();ctx.arc(p[0],p[1],i%3===0?5:3,0,2*Math.PI);ctx.fillStyle=i===0?'#64d6aa':i===12?'#ff6e60':'#f9c678';ctx.fill();if(i===0||i===12){ctx.fillStyle='#f0f6ff';ctx.fillText(i===0?'0 km':'6 km',p[0]+10,p[1]-8)}});
+ ctx.fillStyle='#cbd8e5';ctx.fillText(`0–6 km Bulk-Shear: ${shear.toFixed(1)} m/s`,22,H-14);
+}
+
+function render(){for(const [id,,,,,unit] of defs)document.getElementById('o_'+id).textContent=state[id]+ ' '+unit;let pro=profile(state.gamma),d=diagnostics(pro);chart(pro,'temp');chart(pro,'buoy');validation(pro);let fmt=x=>x===null?'–':`${Math.round(x).toLocaleString('de-DE')} m`;let metrics=[['LCL',fmt(d.lcl)],['LFC',fmt(d.lfc)],['EL',fmt(d.el)],['CAPE',`${Math.round(d.cape)} J/kg`],['CIN',`${Math.round(d.cin)} J/kg`],['Auftrieb oben',`${pro.rows.at(-1).B.toFixed(3)} m/s²`],['Druck oben',`${(pro.rows.at(-1).p/100).toFixed(0)} hPa`],['LCL 125-m-Regel',`${Math.round(125*(state.t0-state.td0))} m`]];document.getElementById('metrics').innerHTML=metrics.map(([k,v])=>`<div class="metric"><small>${k}</small><b>${v}</b></div>`).join('');document.getElementById('summary').textContent=d.lfc===null?'Im gewählten Profil wird bis zur Modellobergrenze kein Niveau freier Konvektion erreicht.':`Freie Konvektion ab ca. ${fmt(d.lfc)}; ${d.el===null?'das Gleichgewichtsniveau liegt oberhalb der Modellobergrenze oder ist nicht erreicht.':'Gleichgewichtsniveau bei '+fmt(d.el)+'.'}`;
+ const cap=d.cape, inhibition=Math.abs(d.cin), spread=state.t0-state.td0;
+ // Wind components are meteorological: direction FROM; vector magnitude in m/s.
+ function uv(speed,deg){let r=deg*Math.PI/180;return [-speed*Math.sin(r),-speed*Math.cos(r)]}
+ const w0=uv(state.wind0,state.windDir0),w6=uv(state.wind6,state.windDir6);
+ const du=w6[0]-w0[0],dv=w6[1]-w0[1],shear=Math.hypot(du,dv);
+ // Idealized energy budget: forced lifting to z may cross the LFC, but cannot
+ // be used as an operational initiation or vertical velocity forecast.
+ let trigger='Nicht erreicht';
+ if(d.lfc!==null){
+   if(state.lift>=d.lfc)trigger='Hebung reicht bis zum modellierten LFC';
+   else trigger='Hebung endet unterhalb des modellierten LFC';
+ }
+ let energy='Gering';
+ if(d.lfc!==null&&cap>=2500)energy='Sehr hoch';
+ else if(d.lfc!==null&&cap>=1500)energy='Hoch';
+ else if(d.lfc!==null&&cap>=500)energy='Mäßig';
+ else if(d.lfc!==null&&cap>=100)energy='Schwach';
+ let organization=shear<10?'Geringe 0–6-km-Scherung':shear<20?'Mäßige 0–6-km-Scherung':shear<30?'Kräftige 0–6-km-Scherung':'Sehr kräftige 0–6-km-Scherung';
+ let interpretation=cap<100?'Das thermodynamische Modell zeigt wenig freie Konvektionsenergie.':
+  shear>=20&&cap>=1000?'Bei Auslösung sind Bedingungen für besser organisierte Konvektion denkbar.':
+  cap>=500?'Konvektion ist bei geeigneter Auslösung möglich; die Organisation bleibt unsicher.':'Nur begrenzte konvektive Energie vorhanden.';
+ if(inhibition>150)interpretation+=' Ausgeprägte CIN kann die Auslösung behindern.';
+ if(state.lift>= (d.lfc??Infinity))interpretation+=' Die vorgegebene geometrische Hebung erreicht das LFC; dies ist keine Garantie für Gewitter.';
+ document.getElementById('storm').innerHTML=`<div><strong>Konvektionsenergie: ${energy}</strong> · ${organization}</div><div>${interpretation}</div><div>CAPE: ${Math.round(cap)} J/kg · CIN: ${Math.round(d.cin)} J/kg · 0–6-km-Bulk-Shear: <strong>${shear.toFixed(1)} m/s</strong> (${(shear*1.94384).toFixed(0)} kt)</div><div>Vorgegebene Hebung: ${state.lift} m · LFC: ${fmt(d.lfc)} · <strong>${trigger}</strong></div><div><b>Keine Gewitterprognose:</b> Die Hebung ist nur ein geometrischer Szenarioparameter, nicht die Berechnung einer realen Front- oder Konvergenzhebung. Scherung allein sagt weder Superzellen noch Tornados voraus. Keine operationelle Flugwetterberatung.</div>`;
+ if(sounding){document.getElementById('validation').insertAdjacentHTML('afterbegin','<div><strong>Radiosondenmodus:</strong> interne ISA-/Hydrostatik-Prüfungen sind keine Validierung der Messdaten. CAPE/CIN: vereinfachte Parcel-Methode, nicht MetPy-verifiziert.</div>')}
+ drawWind(w0,w6,shear);
+buildMesh()}
+document.getElementById('stormColors').addEventListener('change',drawSurface);
+document.getElementById('soundingOff').onclick=()=>{sounding=null;document.getElementById('soundingFile').value='';document.getElementById('soundingStatus').textContent='Idealisiertes Atmosphärenprofil aktiv.';render()};
+
+const stations=[
+ ['10035','Schleswig (DE)',54.53,9.55],['10184','Greifswald (DE)',54.10,13.40],['10393','Lindenberg (DE)',52.21,14.12],
+ ['10410','Essen (DE)',51.40,6.97],['10548','Meiningen (DE)',50.56,10.38],['10739','Stuttgart (DE)',48.83,9.20],
+ ['10868','München-Oberschleißheim (DE)',48.25,11.55],['01028','Bodø (NO)',67.28,14.38],
+ ['01415','Stavanger (NO)',58.88,5.63],['01001','Jan Mayen (NO)',70.93,-8.67],
+ ['02591','Visby (SE)',57.67,18.35],['02963','Jokioinen (FI)',60.81,23.50],
+ ['03743','Larkhill (UK)',51.20,-1.80],['07145','Trappes (FR)',48.77,2.02],['06260','De Bilt (NL)',52.10,5.18],
+ ['06447','Uccle (BE)',50.80,4.36],['11035','Wien Hohe Warte (AT)',48.25,16.36],['06610','Payerne (CH)',46.81,6.94],
+ ['12374','Legionowo (PL)',52.41,20.97],['11520','Prag-Libuš (CZ)',50.01,14.45]
+];
+const $=id=>document.getElementById(id);
+function stationOptions(selected){$('stationSelect').innerHTML=stations.map(a=>`<option value="${a[0]}" ${a[0]===selected?'selected':''}>${a[1]} · WMO ${a[0]}</option>`).join('')}
+stationOptions('10035');
+function kmDistance(a,b,c,d){let rad=Math.PI/180,dy=(c-a)*rad,dx=(d-b)*rad,h=Math.sin(dy/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(dx/2)**2;return 12742*Math.asin(Math.min(1,Math.sqrt(h)))}
+let locationResult=null;
+$('findStation').onclick=async()=>{
+ $('autoStatus').textContent='Standortsuche läuft …';
+ try{
+  let q=$('placeInput').value.trim();if(!q)throw Error('Bitte einen Ort eingeben.');
+  const url='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=5&language=de&format=json';
+  const res=await fetch(url);if(!res.ok)throw Error('Geocoding HTTP '+res.status);
+  const js=await res.json();if(!js.results?.length)throw Error('Ort nicht gefunden.');
+  const loc=js.results[0];locationResult=loc;
+  const ranked=stations.map(a=>({a,km:kmDistance(loc.latitude,loc.longitude,a[2],a[3])})).sort((x,y)=>x.km-y.km);
+  stationOptions(ranked[0].a[0]);
+  $('autoStatus').textContent=`Standort: ${loc.name}, ${loc.country||''} (${loc.latitude.toFixed(2)}°, ${loc.longitude.toFixed(2)}°). Nächste gelistete Station: ${ranked[0].a[1]} (${Math.round(ranked[0].km)} km). Station kann manuell gewechselt werden.`;
+ }catch(e){$('autoStatus').textContent='Standortsuche fehlgeschlagen: '+e.message+' Du kannst die Station manuell auswählen.'}
+};
+function parseSoundingRows(rows){
+ rows=rows.filter(r=>[r.z,r.p,r.T,r.Td].every(Number.isFinite)&&r.z>-500&&r.p>100&&r.T>170&&r.T<340&&r.Td<=r.T+0.25).sort((a,b)=>a.z-b.z);
+ rows=rows.filter((r,i,a)=>i===0||(r.z>a[i-1].z));
+ let clean=[];for(const r of rows){if(!clean.length||(r.z>clean.at(-1).z&&r.p<clean.at(-1).p))clean.push(r)}
+ if(clean.length<5)throw Error('Weniger als fünf plausible Höhenstufen verfügbar.');
+ return clean;
+}
+function useSounding(rows,description){
+ rows=parseSoundingRows(rows);const z0=rows[0].z;rows.forEach(r=>r.z-=z0);
+ sounding=rows;state.top=Math.min(15000,Math.max(3000,Math.floor(rows.at(-1).z/20)*20));
+ state.t0=Math.round(rows[0].T-273.15);state.td0=Math.round(rows[0].Td-273.15);state.p0=Math.round(rows[0].p/100);
+ $('soundingStatus').textContent=`${rows.length} Messniveaus · Messbasis ${z0.toFixed(0)} m MSL · ${description}. Profilhöhe relativ zur Messbasis.`;
+ render();
+}
+function csvToRows(raw){
+ let lines=raw.replace(/<[^>]+>/g,'').trim().split(/\r?\n/).filter(x=>x.trim());
+ let headIdx=lines.findIndex(line=>/height_m|HGHT|pressure_hpa/i.test(line));if(headIdx<0)throw Error('CSV-Kopfzeile nicht gefunden.');
+ lines=lines.slice(headIdx);let sep=lines[0].includes(';')?';':',';let headers=lines.shift().split(sep).map(x=>x.trim().replace(/^"|"$/g,'').toLowerCase());
+ let aliases=[['height_m','hght','height'],['pressure_hpa','pres','pressure'],['temp_c','temp','temperature'],['dewpoint_c','dwpt','dewpoint']];
+ let ids=aliases.map(group=>headers.findIndex(h=>group.includes(h)));
+ if(ids.some(i=>i<0))throw Error('CSV benötigt Höhe, Druck, Temperatur und Taupunkt.');
+ return lines.map(line=>{let v=line.split(sep).map(x=>x.trim().replace(/^"|"$/g,''));let n=i=>Number(v[i]?.replace(',','.'));return {z:n(ids[0]),p:n(ids[1])*100,T:n(ids[2])+273.15,Td:n(ids[3])+273.15}});
+}
+function wyomingListToRows(raw){
+ const text=raw.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ');
+ const rows=[];
+ for(const line of text.split(/\r?\n/)){
+  const t=line.trim().split(/\s+/);if(t.length<6)continue;
+  let nums=t.slice(0,6).map(Number);if(nums.some(x=>!Number.isFinite(x)))continue;
+  let [pres,hght,temp,dwpt]=nums;
+  if(pres>0&&pres<1100&&hght>-500&&hght<40000&&temp>-110&&temp<65&&dwpt>-130&&dwpt<=temp+.25)
+   rows.push({z:hght,p:pres*100,T:temp+273.15,Td:dwpt+273.15});
+ }
+ return rows;
+}
+function sourceURL(id,date,hour,kind='TEXT:CSV'){
+ return `https://weather.uwyo.edu/wsgi/sounding?datetime=${date}%20${hour}%3A00%3A00&id=${id}&type=${encodeURIComponent(kind)}`;
+}
+const nowUTC=new Date();nowUTC.setUTCHours(nowUTC.getUTCHours()>=14?12:0,0,0,0);
+if(nowUTC.getTime()>Date.now()-2*3600000)nowUTC.setUTCHours(nowUTC.getUTCHours()-12);
+$('launchDate').value=nowUTC.toISOString().slice(0,10);$('launchHour').value=String(nowUTC.getUTCHours()).padStart(2,'0');
+$('loadSounding').onclick=async()=>{
+ const id=$('stationSelect').value,st=stations.find(s=>s[0]===id),date=$('launchDate').value,hour=$('launchHour').value;
+ if(!date){$('autoStatus').textContent='Bitte Startdatum angeben.';return}
+ const url=sourceURL(id,date,hour);
+ $('autoStatus').textContent='Abruf läuft …';
+ $('sourceMeta').replaceChildren();
+ const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Originalmessung bei Wyoming öffnen';
+ $('sourceMeta').append('Quelle: University of Wyoming · Station '+st[1]+' · WMO '+id+' · Start '+date+' '+hour+':00 UTC · ',a);
+ try{
+  let response;const localServer=location.protocol==='http:'||location.protocol==='https:';if(!localServer)throw Error('Diese HTML-Datei wurde direkt geöffnet. Bitte den Python-Datendienst starten und http://localhost:8765/ öffnen.');response=await fetch('/api/sounding?station='+encodeURIComponent(id)+'&date='+encodeURIComponent(date)+'&hour='+encodeURIComponent(hour));if(!response.ok){let msg=await response.text();throw Error('Datendienst HTTP '+response.status+': '+msg.slice(0,220))}
+  if(!response.ok)throw Error('HTTP '+response.status);
+  let raw=await response.text(),rows;
+  try{rows=csvToRows(raw)}catch(_){rows=wyomingListToRows(raw)}
+  useSounding(rows,'University of Wyoming, '+st[1]+', '+date+' '+hour+':00 UTC');
+  const km=locationResult?Math.round(kmDistance(locationResult.latitude,locationResult.longitude,st[2],st[3])):null;
+  $('autoStatus').textContent=`Messung geladen: ${st[1]} (WMO ${id}), ${date} ${hour}:00 UTC · ${sounding.length} Höhenstufen`+(km!==null?` · ${km} km vom Suchort`:'')+'. Keine örtliche Echtzeitmessung.';
+ }catch(e){
+  $('autoStatus').textContent='Automatischer Abruf fehlgeschlagen: '+e.message+'. Bitte Internetverbindung, Stationskennung und Messzeit prüfen.';
+ }
+};
+$('soundingFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{useSounding(csvToRows(await f.text()),'lokale CSV '+f.name);$('autoStatus').textContent='Lokale CSV geladen (keine verifizierte Stations- oder Zeitangabe).';$('sourceMeta').textContent='Quelle: Nutzerdatei '+f.name+'; Stations- und Startmetadaten nicht geprüft.'}catch(err){$('soundingStatus').textContent='Importfehler: '+err.message}});
+
+// Fullscreen-like viewport, without relying on Fullscreen API (works in embedded browsers).
+const fullButton=document.getElementById('fullView');
+function toggleFull(){const full=document.getElementById('surfacePanel').classList.toggle('fullview');document.body.classList.toggle('viewlocked',full);fullButton.textContent=full?'✕ Schließen':'🔍 Vollbild';requestAnimationFrame(drawSurface)}
+fullButton.addEventListener('click',toggleFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('surfacePanel').classList.contains('fullview'))toggleFull()});
+document.getElementById('showThresholds').addEventListener('change',drawSurface);document.getElementById('textSize').addEventListener('input',e=>{textScale=Number(e.target.value)/100;document.getElementById('textSizeValue').textContent=e.target.value+' %';drawSurface()});
+render();</script></body></html>
