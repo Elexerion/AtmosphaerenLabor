@@ -4,6 +4,10 @@ import android.os.Bundle;
 import android.webkit.*;
 import android.net.Uri;
 import android.content.Intent;
+import android.app.DownloadManager;
+import android.content.Context;
+import android.os.Environment;
+import android.widget.Toast;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -13,7 +17,7 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle b){super.onCreate(b);web=new WebView(this);setContentView(web);
  web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);
  web.setWebChromeClient(new WebChromeClient(){@Override public boolean onShowFileChooser(WebView w,ValueCallback<Uri[]> cb,FileChooserParams p){chooser=cb;try{startActivityForResult(p.createIntent(),1);return true;}catch(Exception e){chooser=null;cb.onReceiveValue(null);return false;}}});
- web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest r){Uri u=r.getUrl();if("appassets.androidplatform.net".equals(u.getHost()))return false;if("https".equals(u.getScheme())){try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}return true;}@Override public WebResourceResponse shouldInterceptRequest(WebView w,WebResourceRequest r){
+ web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest r){Uri u=r.getUrl();if("appassets.androidplatform.net".equals(u.getHost()))return false;if("https".equals(u.getScheme())){if("weather.uwyo.edu".equals(u.getHost())&&"/wsgi/sounding".equals(u.getPath())){try{String station=u.getQueryParameter("id"),date=u.getQueryParameter("datetime");if(station==null||!station.matches("[0-9]{5}")||date==null)throw new IllegalArgumentException("Ungültige Messdatenadresse");String filename="Radiosonde_"+station+"_"+date.replaceAll("[^0-9]","")+".csv";DownloadManager.Request download=new DownloadManager.Request(u);download.setTitle(filename);download.setMimeType("text/csv");download.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);download.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,filename);((DownloadManager)getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(download);Toast.makeText(MainActivity.this,"CSV-Download gestartet – bitte Downloads prüfen",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(MainActivity.this,"Download konnte nicht gestartet werden: "+e.getMessage(),Toast.LENGTH_LONG).show();}return true;}try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}return true;}@Override public WebResourceResponse shouldInterceptRequest(WebView w,WebResourceRequest r){
  Uri u=r.getUrl();if(!"appassets.androidplatform.net".equals(u.getHost()))return null;
  try{if(u.getPath().equals("/index.html"))return new WebResourceResponse("text/html","UTF-8",getAssets().open("index.html"));
  if(u.getPath().equals("/api/sounding")){String station=u.getQueryParameter("station"),date=u.getQueryParameter("date"),hour=u.getQueryParameter("hour");
