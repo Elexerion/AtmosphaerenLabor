@@ -280,21 +280,31 @@ function useSounding(rows,description){
  render();
 }
 function csvToRows(raw){
- let lines=raw.replace(/<[^>]+>/g,'').trim().split(/\r?\n/).filter(x=>x.trim());
- let headIdx=lines.findIndex(line=>/height_m|HGHT|pressure_hpa/i.test(line));if(headIdx<0)throw Error('CSV-Kopfzeile nicht gefunden.');
- lines=lines.slice(headIdx);let sep=lines[0].includes(';')?';':',';let headers=lines.shift().split(sep).map(x=>x.trim().replace(/^"|"$/g,'').toLowerCase());
- let aliases=[['height_m','hght','height'],['pressure_hpa','pres','pressure'],['temp_c','temp','temperature'],['dewpoint_c','dwpt','dewpoint']];
- let ids=aliases.map(group=>headers.findIndex(h=>group.includes(h)));
+ const plain=raw.replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;|&#160;/gi,' ');
+ let lines=plain.trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ let headIdx=lines.findIndex(line=>/height_m|HGHT|pressure_hpa/i.test(line));
+ if(headIdx<0)throw Error('CSV-Kopfzeile nicht gefunden.');
+ lines=lines.slice(headIdx);
+ const header=lines.shift();
+ const sep=header.includes(';')?';':header.includes(',')?',':null;
+ const split=line=>sep?line.split(sep):line.trim().split(/\s+/);
+ const headers=split(header).map(x=>x.trim().replace(/^"|"$/g,'').toLowerCase());
+ const aliases=[['height_m','hght','height'],['pressure_hpa','pres','pressure'],['temp_c','temp','temperature'],['dewpoint_c','dwpt','dewpoint']];
+ const ids=aliases.map(group=>headers.findIndex(h=>group.includes(h)));
  if(ids.some(i=>i<0))throw Error('CSV benötigt Höhe, Druck, Temperatur und Taupunkt.');
- return lines.map(line=>{let v=line.split(sep).map(x=>x.trim().replace(/^"|"$/g,''));let n=i=>Number(v[i]?.replace(',','.'));return {z:n(ids[0]),p:n(ids[1])*100,T:n(ids[2])+273.15,Td:n(ids[3])+273.15}});
+ return lines.map(line=>{
+  const v=split(line).map(x=>x.trim().replace(/^"|"$/g,''));
+  const n=i=>Number(v[i]?.replace(',','.'));
+  return {z:n(ids[0]),p:n(ids[1])*100,T:n(ids[2])+273.15,Td:n(ids[3])+273.15};
+ });
 }
 function wyomingListToRows(raw){
- const text=raw.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ');
+ const text=raw.replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/pre\s*>/gi,'\n').replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/gi,' ');
  const rows=[];
  for(const line of text.split(/\r?\n/)){
-  const t=line.trim().split(/\s+/);if(t.length<6)continue;
-  let nums=t.slice(0,6).map(Number);if(nums.some(x=>!Number.isFinite(x)))continue;
-  let [pres,hght,temp,dwpt]=nums;
+  const t=line.trim().split(/\s+/);if(t.length<4)continue;
+  const nums=t.slice(0,4).map(Number);if(nums.some(x=>!Number.isFinite(x)))continue;
+  const [pres,hght,temp,dwpt]=nums;
   if(pres>0&&pres<1100&&hght>-500&&hght<40000&&temp>-110&&temp<65&&dwpt>-130&&dwpt<=temp+.25)
    rows.push({z:hght,p:pres*100,T:temp+273.15,Td:dwpt+273.15});
  }
@@ -319,6 +329,7 @@ $('loadSounding').onclick=async()=>{
   if(!response.ok)throw Error('HTTP '+response.status);
   let raw=await response.text(),rows;
   try{rows=csvToRows(raw)}catch(_){rows=wyomingListToRows(raw)}
+  if(rows.length<5)throw Error('Datendienst liefert nur '+rows.length+' auswertbare Höhenstufen. Antwortbeginn: '+raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,170));
   useSounding(rows,'University of Wyoming, '+st[1]+', '+date+' '+hour+':00 UTC');
   const km=locationResult?Math.round(kmDistance(locationResult.latitude,locationResult.longitude,st[2],st[3])):null;
   $('autoStatus').textContent=`Messung geladen: ${st[1]} (WMO ${id}), ${date} ${hour}:00 UTC · ${sounding.length} Höhenstufen`+(km!==null?` · ${km} km vom Suchort`:'')+'. Keine örtliche Echtzeitmessung.';
