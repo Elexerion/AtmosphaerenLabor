@@ -10,8 +10,19 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
+test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
+  const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
+  assert.equal(context.cloudScenario(profile,0),'outline');
+  assert.equal(context.cloudScenario(profile,499),'outline');
+  assert.equal(context.cloudScenario(profile,500),'filled');
+  assert.equal(context.cloudScenario({...profile,lcl:0},0),'filled');
+  for(const lcl of [null,1500])assert.equal(context.cloudScenario({...profile,lcl},3000),'none');
+  let fills=0,strokes=0;const ctx={save(){},restore(){},beginPath(){},moveTo(){},bezierCurveTo(){},closePath(){},fill(){fills++},stroke(){strokes++}};
+  context.cloudSymbol(ctx,0,0,false);assert.equal(fills,0);assert.equal(strokes,1);
+  context.cloudSymbol(ctx,0,0,true);assert.equal(fills,1);assert.equal(strokes,2);
+});
 test('verified real DWD profile loads with pressure in Pa and temperature in K',()=>{
   const rows=context.dwdToRows(fixture(),'10035','2026-10-26','00');
   assert.equal(rows.length,3329); assert.equal(rows[0].p,99274); assert.equal(rows[0].T,282.65);

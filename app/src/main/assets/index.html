@@ -114,9 +114,14 @@ function arrangeCallouts(points,top,bottom,height=38,gap=6){
  if(sorted.length){sorted.at(-1).labelY=Math.min(sorted.at(-1).labelY,bottom-height);for(let i=sorted.length-2;i>=0;i--)sorted[i].labelY=Math.min(sorted[i].labelY,sorted[i+1].labelY-height-gap)}
  return sorted;
 }
-function cloudSymbol(ctx,x,y){
+function cloudScenario(pro,lift){
+ const lcl=diagnostics(pro).lcl;
+ if(lcl===null||!Number.isFinite(lcl)||lcl<pro.rows[0].z||lcl>pro.rows.at(-1).z)return 'none';
+ return lcl<=pro.rows[0].z||Number.isFinite(lift)&&lift>=lcl?'filled':'outline';
+}
+function cloudSymbol(ctx,x,y,filled){
  ctx.save();ctx.fillStyle='#dbeeff55';ctx.strokeStyle='#e4f3ffbb';ctx.lineWidth=1.2;
- ctx.beginPath();ctx.moveTo(x-27,y+9);ctx.bezierCurveTo(x-46,y+6,x-40,y-15,x-23,y-12);ctx.bezierCurveTo(x-21,y-36,x+9,y-34,x+15,y-15);ctx.bezierCurveTo(x+36,y-21,x+46,y+8,x+24,y+9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ ctx.beginPath();ctx.moveTo(x-27,y+9);ctx.bezierCurveTo(x-46,y+6,x-40,y-15,x-23,y-12);ctx.bezierCurveTo(x-21,y-36,x+9,y-34,x+15,y-15);ctx.bezierCurveTo(x+36,y-21,x+46,y+8,x+24,y+9);ctx.closePath();if(filled)ctx.fill();ctx.stroke();ctx.restore();
 }
 function flightEndpointInfo(rows,base,metadata){
  const point=(row,details)=>({height_m:row.z+base,pressure_hpa:row.p/100,temp_c:row.T-273.15,dewpoint_c:row.Td-273.15,time:details?.time,latitude:details?.latitude,longitude:details?.longitude});
@@ -160,7 +165,8 @@ function chart(pro,kind){
   }
   txt(ctx,`CAPE ${Math.round(d.cape)} J/kg${d.lfc!==null&&d.el===null?' (Ausschnitt)':''}`,left+8,top+20,'#ffcf77',14);txt(ctx,`CIN ${Math.round(d.cin)} J/kg`,left+8,top+40,'#8acbff',14);
  }
- if(d.lcl!==null&&d.lcl<=a.at(-1).z){const y=yy(d.lcl);ctx.setLineDash([5,5]);line(ctx,[[left,y],[right,y]],'#d8b1fb99',1.2);ctx.setLineDash([]);cloudSymbol(ctx,left+55,Math.max(top+35,y-12))}
+ const cloud=cloudScenario(pro,state.lift);c.dataset.cloud=cloud;
+ if(cloud!=='none'){const y=yy(d.lcl);ctx.setLineDash([5,5]);line(ctx,[[left,y],[right,y]],'#d8b1fb99',1.2);ctx.setLineDash([]);cloudSymbol(ctx,left+55,Math.max(top+35,y-12),cloud==='filled')}
  if(kind==='temp'){line(ctx,a.map(r=>[xx(r.Te-273.15),yy(r.z)]),'#62c5ff',3);line(ctx,a.map(r=>[xx(r.T-273.15),yy(r.z)]),'#ffb451',3);line(ctx,a.map(r=>[xx(r.Td-273.15),yy(r.z)]),'#a5e39e',2)}
  else line(ctx,a.map(r=>[xx(r.B),yy(r.z)]),'#f6e0a5',2.5);
  const landmarks=chartLandmarks(pro).filter(p=>kind==='temp'?p.key!=='maxB':!['minT','inversion'].includes(p.key));
@@ -181,7 +187,7 @@ function chart(pro,kind){
  }
  const list=document.getElementById(kind+'Points');list.replaceChildren();
  for(const p of entries){const item=document.createElement('div'),label=document.createElement('strong');label.style.color=p.color;label.textContent=p.title;item.append(label,document.createTextNode(' · '+p.detail+' · '+(p.row.p/100).toFixed(0)+' hPa'));list.append(item)}
- const note=document.getElementById(kind+'CloudNote');note.textContent=d.lcl===null?'LCL im dargestellten Modellprofil nicht erreicht.':`Wolkensymbol: schematische Kondensationsbasis am LCL (${Math.round(d.lcl)} m). Es zeigt keine beobachtete Wolke und legt keine Wolkenobergrenze fest.`;
+ const note=document.getElementById(kind+'CloudNote');note.textContent=cloud==='none'?'Keine Wolke eingezeichnet: LCL im dargestellten Modellprofil nicht erreicht.':`${cloud==='filled'?'Gefüllte Wolke: Kondensation im gewählten Hebungsszenario zu erwarten.':'Hohle Wolke: mögliche Kondensationsbasis; die eingestellte Hebung reicht nicht bis dorthin. Wolkenbildung ist in diesem Szenario unwahrscheinlich.'} LCL ${Math.round(d.lcl)} m · Hebung ${state.lift} m. Das Symbol zeigt keine beobachtete Wolke und keine Wolkenobergrenze.`;
  c.setAttribute('aria-label',(kind==='temp'?'Temperaturprofil':'Auftriebsprofil')+' mit '+entries.map(p=>p.title+': '+p.detail).join('; '));
 }
 

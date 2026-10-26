@@ -37,6 +37,11 @@ module.exports = window => {
         if(!flight.includes('31.346')||!flight.includes('Landepunkt'))throw Error('Flight endpoint summary is missing');
         if(!${live}&&!flight.includes('00:35:26'))throw Error('Decoded endpoint time is missing');
         if(!document.getElementById('tempPoints').textContent.includes('LCL')||!document.getElementById('buoyPoints').textContent.includes('LFC')||!document.getElementById('tempCloudNote').textContent.includes('keine beobachtete Wolke'))throw Error('Diagram annotations are missing');
+        const savedLift=state.lift;state.lift=0;render();
+        if(document.getElementById('temp').dataset.cloud!=='outline'||document.getElementById('buoy').dataset.cloud!=='outline')throw Error('Unreached LCL cloud must be hollow');
+        state.lift=3000;render();
+        if(document.getElementById('temp').dataset.cloud!=='filled'||document.getElementById('buoy').dataset.cloud!=='filled')throw Error('Reached LCL cloud must be filled');
+        state.lift=savedLift;render();
         const originalMesh=JSON.stringify(cached),originalProfile=JSON.stringify(sounding),originalMetrics=document.getElementById('metrics').textContent;
         document.getElementById('smoothSurface').checked=false;drawSurface();
         document.getElementById('smoothSurface').checked=true;drawSurface();
