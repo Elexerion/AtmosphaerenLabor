@@ -32,7 +32,11 @@ module.exports = window => {
           document.getElementById('launchHour').value='00';
           await document.getElementById('loadSounding').onclick();
           if(!document.getElementById('autoStatus').textContent.startsWith('DWD-Messung geladen')) throw Error(document.getElementById('autoStatus').textContent);
-        } else useSounding(dwdToRows(p,'10035','2026-10-26','00'),'DWD-Test Schleswig 10035');
+        } else useSounding(dwdToRows(p,'10035','2026-10-26','00'),'DWD-Test Schleswig 10035',p);
+        const flight=document.getElementById('flightSummary').textContent;
+        if(!flight.includes('31.346')||!flight.includes('Landepunkt'))throw Error('Flight endpoint summary is missing');
+        if(!${live}&&!flight.includes('00:35:26'))throw Error('Decoded endpoint time is missing');
+        if(!document.getElementById('tempPoints').textContent.includes('LCL')||!document.getElementById('buoyPoints').textContent.includes('LFC')||!document.getElementById('tempCloudNote').textContent.includes('keine beobachtete Wolke'))throw Error('Diagram annotations are missing');
         const originalMesh=JSON.stringify(cached),originalProfile=JSON.stringify(sounding),originalMetrics=document.getElementById('metrics').textContent;
         document.getElementById('smoothSurface').checked=false;drawSurface();
         document.getElementById('smoothSurface').checked=true;drawSurface();
@@ -56,6 +60,10 @@ module.exports = window => {
       window.setContentSize(1440,1500);
       await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
       await fs.writeFile(path.join(output,'windows-layout.png'),(await window.webContents.capturePage()).toPNG());
+      window.setContentSize(1440,1100);
+      await window.webContents.executeJavaScript("document.querySelector('.plots').scrollIntoView();new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
+      await fs.writeFile(path.join(output,'diagram-annotations.png'),(await window.webContents.capturePage()).toPNG());
+      await fs.writeFile(path.join(output,'annotation-checks.json'),JSON.stringify(await window.webContents.executeJavaScript("({flight:document.getElementById('flightSummary').textContent,temp:document.getElementById('tempPoints').textContent,buoy:document.getElementById('buoyPoints').textContent})"),null,2));
       window.setMinimumSize(320,400);window.setContentSize(390,844);
       await window.webContents.executeJavaScript("document.getElementById('viewportSettingsButton').click();document.getElementById('surfacePanel').scrollIntoView();new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
       const mobile=await window.webContents.executeJavaScript("(()=>{const p=document.getElementById('surfacePanel').getBoundingClientRect(),c=document.getElementById('surface').getBoundingClientRect();return {width:p.width,height:p.height,inside:c.bottom<=p.bottom}})()");
