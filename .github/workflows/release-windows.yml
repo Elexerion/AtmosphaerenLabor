@@ -1,0 +1,41 @@
+name: Windows-Version veröffentlichen
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci
+        working-directory: desktop
+      - run: npm test
+        working-directory: desktop
+      - run: npm run dist
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Gepackte App starten und Messprofil anzeigen
+        shell: pwsh
+        run: |
+          $fixture = (Resolve-Path tests/fixtures/profile.json).Path
+          $output = Join-Path $PWD 'smoke-output'
+          $process = Start-Process desktop/dist/win-unpacked/AtmosphaerenLabor.exe -WindowStyle Hidden -Wait -PassThru -ArgumentList '--smoke-test', "--smoke-fixture=`"$fixture`"", "--smoke-output=`"$output`""
+          if ($process.ExitCode -ne 0) { throw 'Windows start test failed' }
+      - name: Release mit Update-Metadaten erstellen
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content desktop/package.json | ConvertFrom-Json).version
+          gh release create "v$version" desktop/dist/*Setup*.exe desktop/dist/*.blockmap desktop/dist/latest.yml --target $env:GITHUB_SHA --title "Atmosphärenlabor $version" --notes 'Windows-App mit automatischen Updates, DWD-Profilen für Schleswig und lokalem CSV-Import. Noch nicht mit einem Code-Signing-Zertifikat signiert.'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Startpruefung
+          path: smoke-output/

@@ -1,0 +1,43 @@
+name: DWD-Profile aktualisieren
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 * * * *'
+permissions:
+  contents: write
+concurrency:
+  group: dwd-profiles
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install eccodes==2.50.0
+      - run: python -m unittest discover -s tests -v
+      - name: Datenbranch vorbereiten
+        shell: bash
+        run: |
+          if git ls-remote --exit-code --heads origin data; then
+            git fetch origin data
+            git worktree add -b data published FETCH_HEAD
+          else
+            git worktree add --orphan -b data published
+          fi
+      - name: Echte Messung laden und prüfen
+        run: python tools/dwd_profiles.py --output published
+      - name: Verifizierte Profile veröffentlichen
+        working-directory: published
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "Update verified DWD sounding profiles"
+            git push origin HEAD:data
+          fi
