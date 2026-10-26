@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.gradle/
+**/build/
+local.properties
+research/
+dwd-index.html
+profiles/
+desktop/node_modules/
+desktop/dist/

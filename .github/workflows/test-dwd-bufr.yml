@@ -4,64 +4,26 @@ on:
   push:
     paths:
       - '.github/workflows/test-dwd-bufr.yml'
+      - 'tools/dwd_profiles.py'
+      - 'tests/**'
+permissions:
+  contents: read
 jobs:
   decode:
     runs-on: ubuntu-latest
     steps:
-      - name: Install ecCodes tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libeccodes-tools python3-eccodes
-      - name: Download sample from DWD
-        run: |
-          curl --fail --location --retry 3 --max-time 90 \
-            'https://opendata.dwd.de/weather/weather_reports/radiosonde/bufr/Z__C_EDZW_20261024011702_bda01,temp_bufr_999999_999999__MW_469.bin' \
-            --output sample.bin
-          ls -lh sample.bin
-          file sample.bin
-      - name: Inspect BUFR headers and station identifiers
-        run: |
-          echo 'Message count:'
-          bufr_count sample.bin
-          echo 'BUFR headers:'
-          bufr_ls -p edition,typicalDate,typicalTime,dataCategory,numberOfSubsets,compressedData sample.bin
-          echo 'Station identifiers and available fields (best effort):'
-          for key in blockNumber stationNumber wigosIdentifier latitude longitude pressure airTemperature dewpointTemperature geopotentialHeight; do
-            echo "KEY: $key"
-            bufr_get -p "$key" sample.bin || true
-          done
-      - name: Decode and preserve JSON output
-        run: |
-          echo 'Try standard JSON decoding and retain stderr:'
-          set +e
-          bufr_dump -j f sample.bin > decoded.json 2> decode-errors.log
-          status=$?
-          echo "bufr_dump exit status: $status"
-          cat decode-errors.log
-          echo 'Decoded JSON preview:'
-          head -c 1200 decoded.json || true
-          echo
-          ls -lh decoded.json || true
-          echo 'Try per-message decode and report errors:'
-          mkdir -p message-diagnostics
-          bufr_copy sample.bin 'message-diagnostics/msg_[count].bufr' 2>&1 || true
-          for f in message-diagnostics/*.bufr; do
-            [ -f "$f" ] || continue
-            echo "Decoding $f"
-            bufr_dump -j f "$f" > "$f.json" 2> "$f.error"
-            echo "status=$?"
-            head -c 500 "$f.error" || true
-            echo
-          done
-          exit 0
-      - name: Upload diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          name: dwd-bufr-diagnostics
-          path: |
-            sample.bin
-            decoded.json
-            decode-errors.log
-            message-diagnostics/
+          python-version: '3.12'
+      - run: python -m pip install eccodes==2.50.0
+      - name: Echte Referenzmessung, Stationskennung und Subsets prüfen
+        run: python -m unittest discover -s tests -v
+      - name: Aktuelles DWD-Aufstiegsprofil für WMO 10035 suchen
+        run: python tools/dwd_profiles.py --output profiles
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dwd-verified-profiles
+          path: profiles/
           if-no-files-found: warn
