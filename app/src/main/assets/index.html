@@ -237,7 +237,7 @@ function render(){for(const [id,,,,,unit] of defs)document.getElementById('o_'+i
  drawWind(w0,w6,shear);
 buildMesh()}
 document.getElementById('stormColors').addEventListener('change',drawSurface);
-document.getElementById('soundingOff').onclick=()=>{sounding=null;document.getElementById('soundingFile').value='';document.getElementById('soundingStatus').textContent='Idealisiertes Atmosphärenprofil aktiv.';render()};
+document.getElementById('soundingOff').onclick=()=>{sounding=null;document.getElementById('soundingFile').value='';document.getElementById('soundingStatus').textContent='Idealisiertes Atmosphärenprofil aktiv.';document.getElementById('sourceMeta').replaceChildren();document.getElementById('autoStatus').textContent='Idealprofil aktiv; keine Messung ausgewählt.';render()};
 
 const stations=[
  ['10035','Schleswig (DE)',54.53,9.55],['10184','Greifswald (DE)',54.10,13.40],['10393','Lindenberg (DE)',52.21,14.12],
