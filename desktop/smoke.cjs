@@ -8,12 +8,18 @@ module.exports = window => {
   window.webContents.once('did-finish-load', async()=>{
     try {
       const profile=JSON.parse(await fs.readFile(app.commandLine.getSwitchValue('smoke-fixture'),'utf8'));
-      const result=await window.webContents.executeJavaScript(`(()=>{
+      const live=app.commandLine.hasSwitch('smoke-live');
+      const result=await window.webContents.executeJavaScript(`(async()=>{
         const p=${JSON.stringify(profile)};
-        useSounding(dwdToRows(p,'10035','2026-10-26','00'),'DWD-Test Schleswig 10035');
+        if(${live}) {
+          document.getElementById('launchDate').value='2026-10-26';
+          document.getElementById('launchHour').value='00';
+          await document.getElementById('loadSounding').onclick();
+          if(!document.getElementById('autoStatus').textContent.startsWith('DWD-Messung geladen')) throw Error(document.getElementById('autoStatus').textContent);
+        } else useSounding(dwdToRows(p,'10035','2026-10-26','00'),'DWD-Test Schleswig 10035');
         document.getElementById('viewportSettingsButton').click();
         document.getElementById('zoomIn').click();
-        return {title:document.title,levels:sounding.length,status:document.getElementById('soundingStatus').textContent,metrics:document.getElementById('metrics').textContent,settingsOpen:!document.getElementById('viewportSettings').hidden};
+        return {title:document.title,levels:sounding.length,status:document.getElementById('soundingStatus').textContent,source:document.getElementById('sourceMeta').textContent,online:document.getElementById('autoStatus').textContent,metrics:document.getElementById('metrics').textContent,settingsOpen:!document.getElementById('viewportSettings').hidden};
       })()`);
       if(result.levels!==3329||!result.settingsOpen||!result.metrics||errors.length) throw Error(JSON.stringify({result,errors}));
       await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
