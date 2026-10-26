@@ -3,6 +3,11 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const {soundingResponse} = require('./sounding.cjs');
 const ORIGIN = 'labor://app';
+if (app.commandLine.hasSwitch('smoke-test')) {
+  const profilePath = path.join(app.getPath('temp'), 'AtmosphaerenLabor-smoke-profile');
+  require('node:fs').mkdirSync(profilePath, {recursive: true});
+  app.setPath('userData', profilePath);
+}
 protocol.registerSchemesAsPrivileged([{scheme: 'labor', privileges: {standard: true, secure: true, supportFetchAPI: true}}]);
 
 function external(raw) {

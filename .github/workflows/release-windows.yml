@@ -17,7 +17,7 @@ jobs:
         working-directory: desktop
       - run: npm test
         working-directory: desktop
-      - run: npm run dist
+      - run: node node_modules/electron-builder/cli.js --win nsis --x64 --publish never
         working-directory: desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
