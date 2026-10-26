@@ -10,7 +10,7 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -73,4 +73,11 @@ test('chart crop interpolates its top and preserves all physical rows and diagno
   const buoy=context.horizontalChartRange(visible,'buoy',4,600);assert.ok(buoy.min<=0&&buoy.max>=0);
   assert.equal(JSON.stringify(pro),before);assert.equal(JSON.stringify(context.diagnostics(pro)),metrics);
   assert.equal(context.freezingPoints([{z:0,T:270,Te:270},{z:100,T:269,Te:268}]).length,0);
+});
+
+
+test('pressure is vertical and buoyancy horizontal in the 3D geometry',()=>{
+  const base=context.surfaceCoordinates(.6,1000,0),higher=context.surfaceCoordinates(.6,500,0),positive=context.surfaceCoordinates(.6,1000,.1);
+  assert.equal(base[0],higher[0]);assert.equal(base[1],higher[1]);assert.ok(higher[2]>base[2]);
+  assert.equal(positive[0],base[0]);assert.equal(positive[2],base[2]);assert.ok(positive[1]>base[1]);
 });
