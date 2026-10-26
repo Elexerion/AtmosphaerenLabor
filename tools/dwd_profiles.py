@@ -77,6 +77,26 @@ def clean_levels(heights, pressures, temperatures, dewpoints, directions=(), spe
     return clean
 
 
+def flight_endpoints(h, levels, launch):
+    heights, pressures, elapsed = (array(h, key) for key in ('nonCoordinateGeopotentialHeight', 'pressure', 'timePeriod'))
+    latitudes, longitudes = array(h, 'latitudeDisplacement'), array(h, 'longitudeDisplacement')
+    base_lat, base_lon = array(h, 'latitude'), array(h, 'longitude')
+    result = {}
+    for key, row in (('ascent_start', levels[0]), ('ascent_end', levels[-1])):
+        matches = [i for i,z in enumerate(heights) if abs(z-row['height_m']) < .02 and i < len(pressures) and abs(pressures[i]/100-row['pressure_hpa']) < .004]
+        endpoint = {k: row[k] for k in ('height_m','pressure_hpa','temp_c','dewpoint_c')}
+        if len(matches) == 1:
+            i = matches[0]
+            if len(elapsed) == len(heights) and valid(elapsed[i]) and 0 <= elapsed[i] <= 43200:
+                endpoint['time'] = (launch + timedelta(seconds=elapsed[i])).isoformat().replace('+00:00','Z')
+            if len(base_lat) == len(base_lon) == 1 and len(latitudes) == len(longitudes) == len(heights) and all(valid(x) for x in (base_lat[0],base_lon[0],latitudes[i],longitudes[i])):
+                lat, lon = base_lat[0]+latitudes[i], base_lon[0]+longitudes[i]
+                if -90 <= lat <= 90 and -180 <= lon <= 180:
+                    endpoint.update(latitude=round(lat,5),longitude=round(lon,5))
+        result[key] = endpoint
+    return result
+
+
 def decode_subset(h, station, source, message):
     actual = f'{int(scalar(h, "blockNumber")):02d}{int(scalar(h, "stationNumber")):03d}'
     if actual != station:
@@ -98,7 +118,7 @@ def decode_subset(h, station, source, message):
                 retrieved_at=datetime.now(UTC).isoformat().replace('+00:00', 'Z'),
                 source_url=source, message_sha256=hashlib.sha256(message).hexdigest(),
                 template=309057, height_reference='geopotential metres MSL',
-                station_height_m=ground, levels=rows)
+                station_height_m=ground, levels=rows, **flight_endpoints(h,rows,launch))
 
 
 def decode(data, station, source):

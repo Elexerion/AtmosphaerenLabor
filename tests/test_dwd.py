@@ -24,6 +24,11 @@ class DecoderTests(unittest.TestCase):
         self.assertAlmostEqual(p['levels'][0]['temp_c'], 9.5)
         self.assertAlmostEqual(p['levels'][0]['dewpoint_c'], 5.76)
         self.assertGreater(p['levels'][-1]['height_m'], 30000)
+        self.assertEqual(p['ascent_start']['time'], '2026-10-25T22:44:54Z')
+        self.assertEqual(p['ascent_end']['time'], '2026-10-26T00:35:26Z')
+        self.assertAlmostEqual(p['ascent_start']['latitude'],54.52727)
+        self.assertAlmostEqual(p['ascent_end']['longitude'],11.13064)
+        self.assertEqual(p['ascent_end']['height_m'],p['levels'][-1]['height_m'])
 
     def test_wrong_station(self):
         self.assertEqual(dwd.decode((FIXTURES / 'schleswig.bufr').read_bytes(), '10184', 'test'), [])
