@@ -13,16 +13,16 @@ module.exports = window => {
         const t=document.getElementById('textSize');t.value='125';t.dispatchEvent(new Event('input',{bubbles:true}));
         state.wind0=12;document.getElementById('wind0').value='12';
         document.getElementById('smoothSurface').checked=false;
-        document.getElementById('chartTop').value='2500';document.getElementById('chartText').value='140';document.getElementById('chartZoom').value='170';document.getElementById('chartSize').value='120';
+        document.getElementById('chartCeiling').value='2500';document.getElementById('chartText').value='140';document.getElementById('chartZoom').value='170';
         az=-.7;viewZoom=.9;saveSettings();
       })()`);
       await new Promise(resolve=>{window.webContents.once('did-finish-load',resolve);window.webContents.reload()});
-      const restored=await window.webContents.executeJavaScript(`({lightPower,textScale,az,viewZoom,wind:state.wind0,smooth:document.getElementById('smoothSurface').checked,open:!document.getElementById('viewportSettings').hidden,chartTop:+document.getElementById('chartTop').value,chartText:+document.getElementById('chartText').value,chartZoom:+document.getElementById('chartZoom').value,chartSize:+document.getElementById('chartSize').value})`);
-      if(restored.lightPower!==.55||restored.textScale!==1.25||restored.az!==-.7||restored.viewZoom!==.9||restored.wind!==12||restored.smooth!==false||!restored.open||restored.chartTop!==2500||restored.chartText!==140||restored.chartZoom!==170||restored.chartSize!==120)throw Error('Settings not restored: '+JSON.stringify(restored));
+      const restored=await window.webContents.executeJavaScript(`({lightPower,textScale,az,viewZoom,wind:state.wind0,smooth:document.getElementById('smoothSurface').checked,open:!document.getElementById('viewportSettings').hidden,chartCeiling:+document.getElementById('chartCeiling').value,chartText:+document.getElementById('chartText').value,chartZoom:+document.getElementById('chartZoom').value})`);
+      if(restored.lightPower!==.55||restored.textScale!==1.25||restored.az!==-.7||restored.viewZoom!==.9||restored.wind!==12||restored.smooth!==false||!restored.open||restored.chartCeiling!==2500||restored.chartText!==140||restored.chartZoom!==170)throw Error('Settings not restored: '+JSON.stringify(restored));
       await window.webContents.executeJavaScript(`(()=>{
         document.getElementById('lighting').value='75';document.getElementById('lighting').dispatchEvent(new Event('input',{bubbles:true}));
         document.getElementById('textSize').value='100';document.getElementById('textSize').dispatchEvent(new Event('input',{bubbles:true}));
-        document.getElementById('chartTop').value='15000';document.getElementById('chartText').value='100';document.getElementById('chartZoom').value='100';document.getElementById('chartSize').value='100';
+        document.getElementById('chartCeiling').value='15000';document.getElementById('chartText').value='100';document.getElementById('chartZoom').value='100';
         document.getElementById('viewportSettings').hidden=true;resetView();
       })()`);
       const profile=JSON.parse(await fs.readFile(app.commandLine.getSwitchValue('smoke-fixture'),'utf8'));
@@ -75,14 +75,19 @@ module.exports = window => {
       const chartChecks=await window.webContents.executeJavaScript(`(()=>{
         const metrics=document.getElementById('metrics').textContent,measurements=JSON.stringify(sounding),width=+document.getElementById('temp').dataset.xMax-+document.getElementById('temp').dataset.xMin;
         document.getElementById('chartFocus').click();
+        const initialHeight=document.getElementById('temp').height;
         const focus=+document.getElementById('temp').dataset.top,focusedWidth=+document.getElementById('temp').dataset.xMax-+document.getElementById('temp').dataset.xMin;
         if(focus>=15000||focus<500||focusedWidth>=width||!document.getElementById('tempPoints').textContent.includes('0 °C'))throw Error('Lower chart focus failed');
+        document.getElementById('chartCeiling').value='1828.8';document.getElementById('chartCeiling').dispatchEvent(new Event('input',{bubbles:true}));
+        if(+document.getElementById('temp').dataset.top!==1828.8||document.getElementById('temp').height!==initialHeight||document.getElementById('chartCeiling').step!=='any')throw Error('Continuous display ceiling resized graph or changed height');
+        document.getElementById('chartCeiling').value=focus;document.getElementById('chartCeiling').dispatchEvent(new Event('input',{bubbles:true}));
+        if(document.getElementById('surface').dataset.verticalAxis!=='pressure'||document.getElementById('surface').dataset.horizontalAxis!=='buoyancy')throw Error('3D axes not swapped');
         document.getElementById('chartZoom').value='200';document.getElementById('chartZoom').dispatchEvent(new Event('input',{bubbles:true}));
         const zoomWidth=+document.getElementById('temp').dataset.xMax-+document.getElementById('temp').dataset.xMin;
         if(Math.abs(zoomWidth-focusedWidth/2)>.001)throw Error('Horizontal zoom failed');
         document.getElementById('chartText').value='180';document.getElementById('chartText').dispatchEvent(new Event('input',{bubbles:true}));
-        document.getElementById('chartSize').value='150';document.getElementById('chartSize').dispatchEvent(new Event('input',{bubbles:true}));
-        if(document.getElementById('temp').dataset.textScale!=='1.8'||document.getElementById('temp').height<1020)throw Error('Chart size/text scaling failed');
+        
+        if(document.getElementById('temp').dataset.textScale!=='1.8'||document.getElementById('temp').height!==900)throw Error('Chart size/text scaling failed');
         if(document.getElementById('metrics').textContent!==metrics||JSON.stringify(sounding)!==measurements)throw Error('Chart controls changed physics');
         document.querySelector('.chartControls').scrollIntoView();
         return {focus,focusedWidth,zoomWidth,textScale:1.8};
