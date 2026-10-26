@@ -43,4 +43,6 @@ Android: Java 17, Gradle 8.9, Android SDK 35; `gradle --no-daemon assembleDebug`
 
 Die Oberfläche läuft offline mit Idealprofil und lokalem CSV-Import. Internet ist für Standortsuche, Messdaten und Updateprüfung nötig. Ein fehlgeschlagener Updatecheck verhindert den App-Start nicht.
 
+Ab Version 1.1.1 ist die 3D-Kachel kompakter: Die Grafik sitzt unten, das Einstellungsmenü öffnet oberhalb der Grafik, und die Auftriebsachse liegt an der rechten hinteren Kante. Modellregler, 3D-Optionen, Drehung, Zoom, Verschiebung, Stations-/Ortsauswahl und der geöffnete Menüzustand werden lokal gespeichert und beim nächsten Start wiederhergestellt. Messdateien und Meldetermine werden dadurch nicht als aktuelle Messung wiederhergestellt.
+
 Quellen: [DWD Open Data](https://opendata.dwd.de/weather/weather_reports/radiosonde/), [ECMWF-Aufstiegs-/Abstiegstemplates](https://confluence.ecmwf.int/pages/viewpage.action?pageId=266590407), [ecCodes-Subset-Extraktion](https://confluence.ecmwf.int/spaces/UDOC/pages/140393053/How+to+split+subsets+-+ecCodes+BUFR+FAQ).
