@@ -1,0 +1,1 @@
+{"updated_at": "2026-10-26T10:39:30.299133+00:00", "station_id": "10035", "errors": [{"file": "Z__C_EDZW_20261026084303_bda01,temp_bufr_999999_999999__MW_919.bin", "error": "Truncated or invalid BUFR frame"}, {"file": "Z__C_EDZW_20261026013604_bda01,temp_bufr_999999_999999__MW_874.bin", "error": "Truncated or invalid BUFR frame"}]}
