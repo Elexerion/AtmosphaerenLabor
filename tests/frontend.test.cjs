@@ -10,7 +10,7 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -58,4 +58,19 @@ test('nearby label boxes do not overlap or leave the plot',()=>{
 test('flight endpoints restore MSL height and keep missing metadata unknown',()=>{
   const rows=[{z:0,p:99000,T:280,Td:275},{z:30000,p:1000,T:220,Td:210}];
   const info=context.flightEndpointInfo(rows,46,null);assert.equal(info.start.height_m,46);assert.equal(info.end.height_m,30046);assert.equal(info.end.time,undefined);assert.equal(info.start.latitude,undefined);
+});
+
+
+test('chart crop interpolates its top and preserves all physical rows and diagnostics',()=>{
+  const rows=[0,1000,2000,3000].map((z,i)=>({z,p:100000-i*10000,T:283.15-i*6,Te:285.15-i*8,Td:280-i*6,B:[-.02,-.01,.03,-.02][i]})),pro={rows,lcl:600};
+  const before=JSON.stringify(pro),metrics=JSON.stringify(context.diagnostics(pro));
+  const visible=context.visibleChartRows(rows,1500);assert.equal(visible.length,3);assert.equal(visible.at(-1).z,1500);assert.equal(visible.at(-1).p,85000);
+  assert.equal(context.freezingPoints(rows).find(p=>p.key==='zeroEnv').row.z,1500);
+  assert.ok(Math.abs(context.freezingPoints(rows).find(p=>p.key==='zeroParcel').row.z-1666.667)<.01);
+  assert.ok(context.lowerChartFocus(pro)>=2000);assert.ok(context.lowerChartFocus(pro)<=3000);
+  const full=context.horizontalChartRange(rows,'temp',1,600),crop=context.horizontalChartRange(visible,'temp',1,600),zoom=context.horizontalChartRange(visible,'temp',3,600);
+  assert.ok(crop.max-crop.min<full.max-full.min);assert.ok(Math.abs((crop.max-crop.min)/3-(zoom.max-zoom.min))<1e-9);assert.ok(zoom.min<=0&&zoom.max>=0);
+  const buoy=context.horizontalChartRange(visible,'buoy',4,600);assert.ok(buoy.min<=0&&buoy.max>=0);
+  assert.equal(JSON.stringify(pro),before);assert.equal(JSON.stringify(context.diagnostics(pro)),metrics);
+  assert.equal(context.freezingPoints([{z:0,T:270,Te:270},{z:100,T:269,Te:268}]).length,0);
 });

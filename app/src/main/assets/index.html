@@ -8,7 +8,9 @@ body.viewlocked{overflow:hidden}.viewtools button svg{vertical-align:middle}
 #surfacePanel.fullview>p{display:none}#surfacePanel.fullview>h2{margin:0 0 6px}
 @media(max-width:700px){#surfacePanel.fullview .viewtools{gap:4px}#surfacePanel.fullview .viewtools label{font-size:calc(11px * 1)}}
 .viewportHeading{display:flex;align-items:center;justify-content:space-between;gap:12px}.viewportHeading h2{margin:0}.viewportHeading button{font-size:23px;min-width:44px;min-height:44px;cursor:pointer}#viewportSettings[hidden]{display:none!important}#viewportSettings{padding:12px;background:#1b3047;border:1px solid #47647e;border-radius:10px;max-height:min(30dvh,220px);overflow-y:auto;margin:0}.soundingToolbar{display:grid;grid-template-columns:1.2fr 1.4fr 1fr .9fr;gap:16px;align-items:start}.soundingToolbar .control{margin:0}.soundingImport{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0 6px}.soundingImport input{max-width:100%}details{margin-top:12px;color:#a9bdd3}summary{cursor:pointer;color:#c9d8e7;padding:5px 0}#surface{margin-top:auto}@media(max-width:900px){.soundingToolbar{grid-template-columns:1fr 1fr}#surfacePanel{align-self:start}}@media(max-width:480px){.soundingToolbar{grid-template-columns:1fr}}
-.chartPoints{display:grid;gap:7px;margin-top:10px;font-size:13px;line-height:1.5}.chartPoints>div{background:#1b2c40;border-radius:6px;padding:8px}.chartNote{font-size:12px}.termGlossary{display:grid;grid-template-columns:240px 1fr;gap:12px 18px;line-height:1.5}.termGlossary dt{font-weight:700;color:#c9dcf1}.termGlossary dd{margin:0}#termHelp a{color:#8ad0ff}@media(max-width:700px){.termGlossary{grid-template-columns:1fr;gap:5px}.termGlossary dd{margin-bottom:10px}}</style></head><body><header><h1>Atmosphärisches Stabilitätslabor · 3D + Modellvalidierung · Android & Windows</h1><p>Parametrische Auftriebsfläche, Temperatur-/Taupunktprofil und CAPE/CIN – mit höhenabhängiger Umgebungsfeuchte und korrigierter Energieintegration.</p></header><main class="wrap"><section class="panel wide" id="autoSound"><h2>Radiosondenmessung</h2><div class="soundingToolbar">
+.chartPoints{display:grid;gap:7px;margin-top:10px;font-size:13px;line-height:1.5}.chartPoints>div{background:#1b2c40;border-radius:6px;padding:8px}.chartNote{font-size:12px}.termGlossary{display:grid;grid-template-columns:240px 1fr;gap:12px 18px;line-height:1.5}.termGlossary dt{font-weight:700;color:#c9dcf1}.termGlossary dd{margin:0}#termHelp a{color:#8ad0ff}@media(max-width:700px){.termGlossary{grid-template-columns:1fr;gap:5px}.termGlossary dd{margin-bottom:10px}}
+.chartControls{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px 20px}.chartControls .control{margin:0}.chartControls p,.chartControls .viewtools{grid-column:1/-1}.plots{--chart-text-scale:1}.plots h2{font-size:calc(17px * var(--chart-text-scale))}.plots .legend{font-size:calc(12px * var(--chart-text-scale))}.plots p,.plots summary,.plots .chartPoints{font-size:calc(13px * var(--chart-text-scale))}@media(max-width:800px){.chartControls{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:450px){.chartControls{grid-template-columns:1fr}}
+</style></head><body><header><h1>Atmosphärisches Stabilitätslabor · 3D + Modellvalidierung · Android & Windows</h1><p>Parametrische Auftriebsfläche, Temperatur-/Taupunktprofil und CAPE/CIN – mit höhenabhängiger Umgebungsfeuchte und korrigierter Energieintegration.</p></header><main class="wrap"><section class="panel wide" id="autoSound"><h2>Radiosondenmessung</h2><div class="soundingToolbar">
 <div class="control"><label for="placeInput">Standort / Fluggebiet</label><input id="placeInput" type="text" value="Flensburg" placeholder="z. B. Flensburg, Hamburg, Berlin"><button type="button" id="findStation">Station suchen</button></div>
 <div class="control"><label for="stationSelect">Radiosondenstation</label><select id="stationSelect"></select></div>
 <div class="control"><label for="launchDate">Meldedatum (UTC)</label><input type="date" id="launchDate"></div>
@@ -23,7 +25,7 @@ body.viewlocked{overflow:hidden}.viewtools button svg{vertical-align:middle}
 <dt>CAPE · verfügbare Konvektionsenergie</dt><dd>Positive Auftriebsenergie zwischen LFC und EL, angegeben in J/kg. Größere Werte bedeuten mehr potenzielle Energie für Aufwinde; daraus allein folgt keine Gewitterprognose.</dd>
 <dt>CIN · Konvektionshemmung</dt><dd>Bremsende Auftriebsenergie unterhalb des LFC, ebenfalls in J/kg. Die App zeigt das negative Integral. Sein Betrag beschreibt die zu überwindende Energiebarriere.</dd>
 <dt>Ballonsonde und Luftpaket</dt><dd>Die Ballonsonde misst Temperatur und Feuchte der Umgebung. Daraus berechnet das Modell den Aufstieg eines Luftpakets. Die gelbe 3D-Linie zeigt dessen berechneten Auftrieb; Start und Profilende der Sonde stehen bei den Messdaten.</dd>
-</dl><p>Alle markierten Höhen beziehen sich auf die Messbasis bzw. den Modellboden. MSL bezeichnet die Höhe über dem mittleren Meeresspiegel. Wenn ein Niveau im berechneten Profil nicht erreicht wird, bleibt sein Wert offen.</p><p>Fachliche Grundlage: <a href="https://www.weather.gov/lmk/indices" target="_blank" rel="noopener noreferrer">NOAA/NWS zu CAPE und CIN</a> · <a href="https://www.noaa.gov/jetstream/appendix/weather-glossary-l" target="_blank" rel="noopener noreferrer">NOAA zu LCL/LFC</a>.</p></details><h2 style="margin-top:18px">Konvektives Gewitterpotenzial (Modell)</h2><div id="storm" class="validation" aria-live="polite"></div><h2 style="margin-top:18px">Numerische Prüfungen (Referenzvergleich)</h2><div id="validation" class="validation"></div></section><section class="plots wide"><div class="panel"><h2>Temperaturprofil und Kondensationsniveau</h2><canvas id="temp" width="800" height="680" role="img"></canvas><div class="legend"><span><i class="sw" style="background:#ffb451"></i>Temperatur Luftpaket</span><span><i class="sw" style="background:#62c5ff"></i>Temperatur Umgebung</span><span><i class="sw" style="background:#a5e39e"></i>Taupunkt Luftpaket</span></div><p id="tempCloudNote" class="chartNote"></p><details><summary>Markierte Temperaturpunkte mit Zahlenwerten</summary><div id="tempPoints" class="chartPoints"></div></details></div><div class="panel"><h2>Auftrieb und Energieflächen</h2><canvas id="buoy" width="800" height="680" role="img"></canvas><p>Orange: CAPE zwischen LFC und EL. Blau: CIN unterhalb des LFC. Höhen über Messbasis bzw. Modellboden.</p><p id="buoyCloudNote" class="chartNote"></p><details><summary>Markierte Auftriebspunkte mit Zahlenwerten</summary><div id="buoyPoints" class="chartPoints"></div></details></div></section><section class="panel wide"><h2>Windprofil und vertikale Windscherung</h2><canvas id="wind" width="900" height="370" style="width:100%;height:auto;max-height:370px"></canvas><p>Vereinfachtes lineares Windvektorprofil zwischen Boden und 6 km. Die Richtung bezeichnet die meteorologische Herkunftsrichtung. Das Windprofil beeinflusst die 3D-Auftriebsfläche nicht, sondern ergänzt die qualitative Konvektionsanalyse.</p></section></main><footer><b>Modellgrenzen:</b> Ideales Gas, hydrostatisches Gleichgewicht, konstante Umgebungs-Temperaturabnahme, exponentiell mit der Höhe abnehmendes Feuchte-Mischungsverhältnis der Umgebung, pseudoadiabatischer Aufstieg des gesättigten Pakets, keine Entrainment-/Eisphasenprozesse. Die Windscherung wird separat aus einem idealisierten Windprofil berechnet, ohne dynamische Kopplung an den Auftrieb. Die 3D-Fläche verwendet ein wählbares, feineres Rechengitter und maskiert Druckniveaus außerhalb der berechneten Profilhöhe; der Druck ist für jeden Gradienten hydrostatisch berechnet; er ist nicht eine unabhängig wählbare Zustandsvariable. Die Referenzprüfung vergleicht mit analytischer Poisson- und Bolton-Näherung sowie hydrostatischem Residuum. Eine unabhängige MetPy-Validierung ist noch ausstehend. Radiosondenimport erfolgt automatisch aus geprüften DWD-Profilen für Schleswig oder lokal per CSV, einschließlich Wyoming-Dateien. Android und Windows nutzen dieselbe Oberfläche und HTTPS-gesicherte Messdaten. Das Winddiagramm bleibt ein idealisiertes Modellwindprofil; importierte Windmessungen werden dort derzeit nicht dargestellt. Violett codiert nur einen heuristischen CAPE-/Scherungsindikator bei positivem Auftrieb, keine Gewitterwahrscheinlichkeit. Die Konvektionsbewertung verwendet CAPE/CIN, 0–6-km-Bulk-Shear und eine idealisierte Hebung, ist aber weder eine Prognose noch eine Wahrscheinlichkeit. Interne Prüfungen vergleichen die trockene Adiabate mit der Poisson-Gleichung und das LCL mit der Bolton-Näherung; das ist keine unabhängige Validierung gegen MetPy oder Messdaten. CAPE/CIN und LFC/EL sind Näherungswerte; CAPE wird erst oberhalb des LFC und bis zum EL integriert und kein Ersatz für ein Radiosonden-Skew-T oder eine Flugwetterberatung. Bei hoher Anfangsfeuchte kann das LCL am Boden liegen. Ein reales Sounding hat meist variable Gradienten und komplexe Feuchteschichten. Die 3D-Fläche ist eine Modell-Sensitivitätsanalyse, kein Radiosondenprofil.</footer><script>
+</dl><p>Alle markierten Höhen beziehen sich auf die Messbasis bzw. den Modellboden. MSL bezeichnet die Höhe über dem mittleren Meeresspiegel. Wenn ein Niveau im berechneten Profil nicht erreicht wird, bleibt sein Wert offen.</p><p>Fachliche Grundlage: <a href="https://www.weather.gov/lmk/indices" target="_blank" rel="noopener noreferrer">NOAA/NWS zu CAPE und CIN</a> · <a href="https://www.noaa.gov/jetstream/appendix/weather-glossary-l" target="_blank" rel="noopener noreferrer">NOAA zu LCL/LFC</a>.</p></details><h2 style="margin-top:18px">Konvektives Gewitterpotenzial (Modell)</h2><div id="storm" class="validation" aria-live="polite"></div><h2 style="margin-top:18px">Numerische Prüfungen (Referenzvergleich)</h2><div id="validation" class="validation"></div></section><section class="panel wide chartControls" aria-label="Diagrammansicht einstellen"><h2 style="grid-column:1/-1">Diagrammansicht</h2><div class="control"><label for="chartTop">Maximale Anzeigehöhe <output id="chartTopValue"></output></label><input id="chartTop" type="range" min="500" max="15000" step="100" value="15000"></div><div class="control"><label for="chartZoom">Horizontaler Zoom <output id="chartZoomValue"></output></label><input id="chartZoom" type="range" min="100" max="400" step="10" value="100"></div><div class="control"><label for="chartSize">Diagrammhöhe <output id="chartSizeValue"></output></label><input id="chartSize" type="range" min="80" max="180" step="5" value="100"></div><div class="control"><label for="chartText">Textgröße <output id="chartTextValue"></output></label><input id="chartText" type="range" min="80" max="180" step="5" value="100"></div><div class="viewtools"><button id="chartFocus" type="button">Wolkenbasis &amp; 0 °C vergrößern</button><button id="chartAll" type="button">Gesamtes Modellprofil</button></div><p>Gilt für Temperatur und Auftrieb. Die horizontale Achse passt sich an den sichtbaren Höhenbereich an. Zusätzlicher Zoom konzentriert sich auf Wolkenbasis und 0 °C bzw. den Nullauftrieb. Die Modellrechnung und CAPE/CIN bleiben unverändert.</p></section><section class="plots wide"><div class="panel"><h2>Temperaturprofil und Kondensationsniveau</h2><canvas id="temp" width="800" height="680" role="img"></canvas><div class="legend"><span><i class="sw" style="background:#ffb451"></i>Temperatur Luftpaket</span><span><i class="sw" style="background:#62c5ff"></i>Temperatur Umgebung</span><span><i class="sw" style="background:#a5e39e"></i>Taupunkt Luftpaket</span></div><p id="tempCloudNote" class="chartNote"></p><details><summary>Markierte Temperaturpunkte mit Zahlenwerten</summary><div id="tempPoints" class="chartPoints"></div></details></div><div class="panel"><h2>Auftrieb und Energieflächen</h2><canvas id="buoy" width="800" height="680" role="img"></canvas><p>Orange: CAPE zwischen LFC und EL. Blau: CIN unterhalb des LFC. Höhen über Messbasis bzw. Modellboden.</p><p id="buoyCloudNote" class="chartNote"></p><details><summary>Markierte Auftriebspunkte mit Zahlenwerten</summary><div id="buoyPoints" class="chartPoints"></div></details></div></section><section class="panel wide"><h2>Windprofil und vertikale Windscherung</h2><canvas id="wind" width="900" height="370" style="width:100%;height:auto;max-height:370px"></canvas><p>Vereinfachtes lineares Windvektorprofil zwischen Boden und 6 km. Die Richtung bezeichnet die meteorologische Herkunftsrichtung. Das Windprofil beeinflusst die 3D-Auftriebsfläche nicht, sondern ergänzt die qualitative Konvektionsanalyse.</p></section></main><footer><b>Modellgrenzen:</b> Ideales Gas, hydrostatisches Gleichgewicht, konstante Umgebungs-Temperaturabnahme, exponentiell mit der Höhe abnehmendes Feuchte-Mischungsverhältnis der Umgebung, pseudoadiabatischer Aufstieg des gesättigten Pakets, keine Entrainment-/Eisphasenprozesse. Die Windscherung wird separat aus einem idealisierten Windprofil berechnet, ohne dynamische Kopplung an den Auftrieb. Die 3D-Fläche verwendet ein wählbares, feineres Rechengitter und maskiert Druckniveaus außerhalb der berechneten Profilhöhe; der Druck ist für jeden Gradienten hydrostatisch berechnet; er ist nicht eine unabhängig wählbare Zustandsvariable. Die Referenzprüfung vergleicht mit analytischer Poisson- und Bolton-Näherung sowie hydrostatischem Residuum. Eine unabhängige MetPy-Validierung ist noch ausstehend. Radiosondenimport erfolgt automatisch aus geprüften DWD-Profilen für Schleswig oder lokal per CSV, einschließlich Wyoming-Dateien. Android und Windows nutzen dieselbe Oberfläche und HTTPS-gesicherte Messdaten. Das Winddiagramm bleibt ein idealisiertes Modellwindprofil; importierte Windmessungen werden dort derzeit nicht dargestellt. Violett codiert nur einen heuristischen CAPE-/Scherungsindikator bei positivem Auftrieb, keine Gewitterwahrscheinlichkeit. Die Konvektionsbewertung verwendet CAPE/CIN, 0–6-km-Bulk-Shear und eine idealisierte Hebung, ist aber weder eine Prognose noch eine Wahrscheinlichkeit. Interne Prüfungen vergleichen die trockene Adiabate mit der Poisson-Gleichung und das LCL mit der Bolton-Näherung; das ist keine unabhängige Validierung gegen MetPy oder Messdaten. CAPE/CIN und LFC/EL sind Näherungswerte; CAPE wird erst oberhalb des LFC und bis zum EL integriert und kein Ersatz für ein Radiosonden-Skew-T oder eine Flugwetterberatung. Bei hoher Anfangsfeuchte kann das LCL am Boden liegen. Ein reales Sounding hat meist variable Gradienten und komplexe Feuchteschichten. Die 3D-Fläche ist eine Modell-Sensitivitätsanalyse, kein Radiosondenprofil.</footer><script>
 let settingsReady=false,settingsSaveTimer;
 
 (()=>{const b=document.getElementById("viewportSettingsButton"),p=document.getElementById("viewportSettings");b.addEventListener("click",()=>{p.hidden=!p.hidden;b.setAttribute("aria-expanded",String(!p.hidden));drawSurface();});})();
@@ -141,15 +143,57 @@ function updateFlightSummary(pro){
  const note=document.createElement('p');note.textContent=sounding?`Das Profilende bezeichnet die letzte verfügbare Aufstiegsmessung; der Landepunkt ist nicht enthalten. Diagrammhöhen beziehen sich auf die Messbasis (${soundingBase.toFixed(0)} m MSL).`:'Ein Luftpaket ist ein berechnetes Luftvolumen. Die Ballonsonde misst die Umgebung, aus der dieser Modellaufstieg berechnet wird.';target.append(note);
  if(sounding&&sounding.at(-1).z>pro.rows.at(-1).z+20){const limit=document.createElement('div');limit.textContent=`Sichtbarer Ausschnitt bis ${(pro.rows.at(-1).z/1000).toFixed(2)} km über Messbasis; das vollständige Messprofil reicht bis ${(sounding.at(-1).z/1000).toFixed(2)} km.`;target.append(limit)}
 }
+function visibleChartRows(rows,top){
+ const limit=Math.max(rows[0].z,Math.min(top,rows.at(-1).z)),visible=rows.filter(r=>r.z<=limit).map(r=>({...r}));
+ if(visible.at(-1).z<limit)visible.push(rowAtHeight(rows,limit));return visible;
+}
+function freezingPoints(rows){
+ const points=[];
+ for(const [key,field,color,title] of [['zeroEnv','Te','#62c5ff','0 °C · Umgebung'],['zeroParcel','T','#ffb451','0 °C · Luftpaket']]){
+  for(let i=0;i<rows.length;i++){
+   const u=rows[i],v=rows[i+1];let z=null;
+   if(u[field]===273.15)z=u.z;
+   else if(v&&(u[field]-273.15)*(v[field]-273.15)<0)z=u.z+(v.z-u.z)*(273.15-u[field])/(v[field]-u[field]);
+   if(z!==null){points.push({key,row:rowAtHeight(rows,z),color,title,field});break}
+  }
+ }return points;
+}
+function lowerChartFocus(pro){
+ const levels=[pro.lcl,...freezingPoints(pro.rows).map(p=>p.row.z)].filter(z=>Number.isFinite(z)&&z>=0&&z<=pro.rows.at(-1).z);
+ const highest=levels.length?Math.max(...levels):2000;
+ return Math.min(pro.rows.at(-1).z,Math.max(500,Math.ceil((highest+Math.max(300,highest*.2))/100)*100));
+}
+function horizontalChartRange(rows,kind,zoom,lcl){
+ const values=kind==='temp'?rows.flatMap(r=>[r.T-273.15,r.Te-273.15,r.Td-273.15]):rows.map(r=>r.B);
+ let min=Math.min(...values,kind==='buoy'?0:Infinity),max=Math.max(...values,kind==='buoy'?0:-Infinity);
+ const pad=kind==='temp'?3:Math.max(.01,(max-min)*.12);min-=pad;max+=pad;
+ let focus=0;
+ if(kind==='temp'){
+  const anchors=[];if(Number.isFinite(lcl)&&lcl>=rows[0].z&&lcl<=rows.at(-1).z)anchors.push(rowAtHeight(rows,lcl).T-273.15);
+  if(freezingPoints(rows).length)anchors.push(0);
+  focus=anchors.length?anchors.reduce((a,b)=>a+b,0)/anchors.length:(min+max)/2;
+ }
+ const width=(max-min)/Math.max(1,zoom),lo=Math.max(min,Math.min(max-width,focus-width/2));return {min:lo,max:lo+width};
+}
+function updateChartControls(pro){
+ const shown=Math.min(+document.getElementById('chartTop').value,pro.rows.at(-1).z);
+ document.getElementById('chartTopValue').textContent=(shown/1000).toLocaleString('de-DE',{maximumFractionDigits:1})+' km';
+ for(const [id,suffix] of [['chartZoom',' %'],['chartSize',' %'],['chartText',' %']])document.getElementById(id+'Value').textContent=document.getElementById(id).value+suffix;
+ document.querySelector('.plots').style.setProperty('--chart-text-scale',+document.getElementById('chartText').value/100);
+}
 function chart(pro,kind){
- const [c,ctx]=canvas(kind),a=pro.rows,W=c.width,H=c.height,left=78,right=W-222,top=40,bottom=H-55,yy=z=>bottom-z/state.top*(bottom-top),d=diagnostics(pro);
- let values=kind==='temp'?a.flatMap(r=>[r.T-273.15,r.Te-273.15,r.Td-273.15]):a.map(r=>r.B);
- let min=Math.min(...values,kind==='buoy'?0:Infinity),max=Math.max(...values,kind==='buoy'?0:-Infinity),pad=kind==='temp'?3:Math.max(.01,(max-min)*.12);min-=pad;max+=pad;
- const xx=value=>left+(value-min)/(max-min)*(right-left);
+ const [c,ctx]=canvas(kind),full=pro.rows,topHeight=Math.min(+document.getElementById('chartTop').value,full.at(-1).z),a=visibleChartRows(full,topHeight),d=diagnostics(pro),scale=+document.getElementById('chartText').value/100;
+ const landmarks=chartLandmarks(pro).filter(p=>p.row.z<=topHeight&&(kind==='temp'?p.key!=='maxB':!['minT','inversion'].includes(p.key)));
+ if(kind==='temp')landmarks.push(...freezingPoints(a));
+ const W=c.width,H=Math.ceil(Math.max(680*+document.getElementById('chartSize').value/100,100*scale+(landmarks.length+2)*44*scale));c.height=H;
+ const left=78*Math.max(1,scale*.85),right=W-Math.max(222,222*scale),top=40*scale,bottom=H-55*scale,yy=z=>bottom-z/topHeight*(bottom-top);
+ const range=horizontalChartRange(a,kind,+document.getElementById('chartZoom').value/100,d.lcl),min=range.min,max=range.max,xx=value=>left+(value-min)/(max-min)*(right-left);
+ const text=(s,x,y,color='#dbe7f5',size=15)=>txt(ctx,s,x,y,color,size*scale);
  ctx.fillStyle='#101b2a';ctx.fillRect(left,top,right-left,bottom-top);
- for(let j=0;j<=5;j++){const z=state.top*j/5,y=yy(z);line(ctx,[[left,y],[right,y]],'#283b50',1);txt(ctx,(z/1000).toFixed(1)+' km',5,y+5,'#a8bcd2',13)}
- for(let j=0;j<=5;j++){const value=min+(max-min)*j/5,x=xx(value);line(ctx,[[x,top],[x,bottom]],'#25374b',1);txt(ctx,kind==='temp'?value.toFixed(0):value.toFixed(2),x-12,bottom+23,'#b9c9d8',12)}
- axis(ctx,left,top,left,bottom);axis(ctx,left,bottom,right,bottom);txt(ctx,'Höhe über '+(sounding?'Messbasis':'Modellboden'),left,19,'#a8bcd2',13);txt(ctx,kind==='temp'?'Temperatur (°C)':'Auftrieb (m/s²)',left+110,H-12,'#e2eaf4',15);
+ for(let j=0;j<=5;j++){const z=topHeight*j/5,y=yy(z);line(ctx,[[left,y],[right,y]],'#283b50',1);text((z/1000).toFixed(topHeight<2000?2:1)+' km',4,y+5*scale,'#a8bcd2',12)}
+ for(let j=0;j<=5;j++){const value=min+(max-min)*j/5,x=xx(value);line(ctx,[[x,top],[x,bottom]],'#25374b',1);text(kind==='temp'?value.toFixed(0):value.toFixed(2),x-12*scale,bottom+23*scale,'#b9c9d8',12)}
+ axis(ctx,left,top,left,bottom);axis(ctx,left,bottom,right,bottom);text('Höhe über '+(sounding?'Messbasis':'Modellboden'),left,19*scale,'#a8bcd2',12);text(kind==='temp'?'Temperatur (°C)':'Auftrieb (m/s²)',left,H-12*scale,'#e2eaf4',14);
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
  if(kind==='buoy'){
   const zero=xx(0);line(ctx,[[zero,top],[zero,bottom]],'#a3b5c7',1.3);
   for(let i=1;i<a.length;i++){
@@ -158,38 +202,40 @@ function chart(pro,kind){
    if(u.B*v.B<0)cuts.push(u.z+(v.z-u.z)*(-u.B)/(v.B-u.B));cuts.sort((x,y)=>x-y);
    for(let j=1;j<cuts.length;j++){
     const lo=cuts[j-1],hi=cuts[j],middle=(lo+hi)/2,at=z=>u.B+(v.B-u.B)*(z-u.z)/(v.z-u.z),b=at(middle);
-    const positive=b>0&&d.lfc!==null&&middle>=d.lfc&&middle<=(d.el??a.at(-1).z),negative=b<0&&middle<=(d.lfc??a.at(-1).z);
+    const positive=b>0&&d.lfc!==null&&middle>=d.lfc&&middle<=(d.el??full.at(-1).z),negative=b<0&&middle<=(d.lfc??full.at(-1).z);
     if(!positive&&!negative)continue;
     ctx.beginPath();ctx.moveTo(zero,yy(lo));ctx.lineTo(xx(at(lo)),yy(lo));ctx.lineTo(xx(at(hi)),yy(hi));ctx.lineTo(zero,yy(hi));ctx.closePath();ctx.fillStyle=positive?'#ffad4955':'#4c9fe255';ctx.fill();
    }
   }
-  txt(ctx,`CAPE ${Math.round(d.cape)} J/kg${d.lfc!==null&&d.el===null?' (Ausschnitt)':''}`,left+8,top+20,'#ffcf77',14);txt(ctx,`CIN ${Math.round(d.cin)} J/kg`,left+8,top+40,'#8acbff',14);
- }
- const cloud=cloudScenario(pro,state.lift);c.dataset.cloud=cloud;
- if(cloud!=='none'){const y=yy(d.lcl);ctx.setLineDash([5,5]);line(ctx,[[left,y],[right,y]],'#d8b1fb99',1.2);ctx.setLineDash([]);cloudSymbol(ctx,left+55,Math.max(top+35,y-12),cloud==='filled')}
+ }else if(min<=0&&max>=0){ctx.setLineDash([4,4]);line(ctx,[[xx(0),top],[xx(0),bottom]],'#d5e5f077',1.4);ctx.setLineDash([])}
+ const cloud=cloudScenario(pro,state.lift),visibleCloud=cloud!=='none'&&d.lcl<=topHeight?cloud:'none';c.dataset.cloud=visibleCloud;
+ if(visibleCloud!=='none'){const y=yy(d.lcl);ctx.setLineDash([5,5]);line(ctx,[[left,y],[right,y]],'#d8b1fb99',1.2);ctx.setLineDash([]);cloudSymbol(ctx,left+55,Math.max(top+35,y-12),cloud==='filled')}
  if(kind==='temp'){line(ctx,a.map(r=>[xx(r.Te-273.15),yy(r.z)]),'#62c5ff',3);line(ctx,a.map(r=>[xx(r.T-273.15),yy(r.z)]),'#ffb451',3);line(ctx,a.map(r=>[xx(r.Td-273.15),yy(r.z)]),'#a5e39e',2)}
  else line(ctx,a.map(r=>[xx(r.B),yy(r.z)]),'#f6e0a5',2.5);
- const landmarks=chartLandmarks(pro).filter(p=>kind==='temp'?p.key!=='maxB':!['minT','inversion'].includes(p.key));
- const first=a[0],last=a.at(-1),truncated=!!sounding&&sounding.at(-1).z>last.z+20;
+ ctx.restore();
+ if(kind==='buoy'){text(`CAPE ${Math.round(d.cape)} J/kg`,left+8,top+20*scale,'#ffcf77',12);text(`CIN ${Math.round(d.cin)} J/kg`,left+8,top+38*scale,'#8acbff',12);text('Energie: gesamtes Modellprofil',left+8,top+54*scale,'#a8bcd2',9)}
+ const first=a[0],last=a.at(-1),truncated=topHeight<full.at(-1).z||!!sounding&&sounding.at(-1).z>last.z+20;
  const points=[{key:'start',row:first,color:'#9ee9be'},...landmarks,{key:'end',row:last,color:'#b7d9ff'}];
  const names={start:sounding?'Messstart':'Modellstart',end:truncated?'Ansichtsgrenze':sounding?'Profilende':'Modellobergrenze',LCL:'LCL · mögliche Wolkenbasis',LFC:'LFC · freier Auftrieb',EL:'EL · Gleichgewicht',maxB:'Stärkster Auftrieb',minT:'Kälteste Umgebung',inversion:'Inversion'};
  const entries=points.map(p=>{
-  const value=kind==='temp'?(p.key==='start'||p.key==='end'||p.key==='minT'||p.key==='inversion'?p.row.Te:p.row.T)-273.15:p.row.B;
-  const title=p.key==='inversion'?`Inversion +${p.delta.toFixed(1)} °C`:names[p.key];
+  const value=kind==='temp'?(p.field?p.row[p.field]:p.key==='start'||p.key==='end'||p.key==='minT'||p.key==='inversion'?p.row.Te:p.row.T)-273.15:p.row.B;
+  const title=p.title||(p.key==='inversion'?`Inversion +${p.delta.toFixed(1)} °C`:names[p.key]);
   const detail=`${Math.round(p.row.z).toLocaleString('de-DE')} m · ${kind==='temp'?value.toFixed(1)+' °C':value.toFixed(3)+' m/s²'}`;
   return {...p,x:xx(value),y:yy(p.row.z),title,detail};
  });
- for(const p of arrangeCallouts(entries,top,bottom)){
+ for(const p of arrangeCallouts(entries.filter(p=>p.x>=left&&p.x<=right),top,bottom,38*scale,6*scale)){
   ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,2*Math.PI);ctx.fill();
-  line(ctx,[[p.x+4,p.y],[right+8,p.labelY+19],[right+15,p.labelY+19]],p.color+'99',.9);
-  ctx.fillStyle='#192b40';ctx.fillRect(right+15,p.labelY,W-right-20,38);ctx.fillStyle=p.color;ctx.fillRect(right+15,p.labelY,2,38);
-  txt(ctx,p.title,right+22,p.labelY+14,p.color,12);txt(ctx,p.detail,right+22,p.labelY+30,'#e2eaf4',12);
+  line(ctx,[[p.x+4,p.y],[right+8,p.labelY+19*scale],[right+15,p.labelY+19*scale]],p.color+'99',.9);
+  ctx.fillStyle='#192b40';ctx.fillRect(right+15,p.labelY,W-right-20,38*scale);ctx.fillStyle=p.color;ctx.fillRect(right+15,p.labelY,2,38*scale);
+  text(p.title,right+22,p.labelY+14*scale,p.color,12);text(p.detail,right+22,p.labelY+30*scale,'#e2eaf4',12);
  }
  const list=document.getElementById(kind+'Points');list.replaceChildren();
- for(const p of entries){const item=document.createElement('div'),label=document.createElement('strong');label.style.color=p.color;label.textContent=p.title;item.append(label,document.createTextNode(' · '+p.detail+' · '+(p.row.p/100).toFixed(0)+' hPa'));list.append(item)}
- const note=document.getElementById(kind+'CloudNote');note.textContent=cloud==='none'?'Keine Wolke eingezeichnet: LCL im dargestellten Modellprofil nicht erreicht.':`${cloud==='filled'?'Gefüllte Wolke: Kondensation im gewählten Hebungsszenario zu erwarten.':'Hohle Wolke: mögliche Kondensationsbasis; die eingestellte Hebung reicht nicht bis dorthin. Wolkenbildung ist in diesem Szenario unwahrscheinlich.'} LCL ${Math.round(d.lcl)} m · Hebung ${state.lift} m. Das Symbol zeigt keine beobachtete Wolke und keine Wolkenobergrenze.`;
- c.setAttribute('aria-label',(kind==='temp'?'Temperaturprofil':'Auftriebsprofil')+' mit '+entries.map(p=>p.title+': '+p.detail).join('; '));
+ for(const p of entries){const item=document.createElement('div'),label=document.createElement('strong');label.style.color=p.color;label.textContent=p.title;item.append(label,document.createTextNode(' · '+p.detail+' · '+(p.row.p/100).toFixed(0)+' hPa'+(p.x<left||p.x>right?' · außerhalb des horizontalen Ausschnitts':'')));list.append(item)}
+ const note=document.getElementById(kind+'CloudNote');note.textContent=visibleCloud==='none'?(cloud==='none'?'Keine Wolke eingezeichnet: LCL im berechneten Modellprofil nicht erreicht.':'Wolkenbasis liegt oberhalb des sichtbaren Höhenausschnitts.'):`${cloud==='filled'?'Gefüllte Wolke: Kondensation im gewählten Hebungsszenario zu erwarten.':'Hohle Wolke: mögliche Kondensationsbasis; die eingestellte Hebung reicht nicht bis dorthin. Wolkenbildung ist in diesem Szenario unwahrscheinlich.'} LCL ${Math.round(d.lcl)} m · Hebung ${state.lift} m. Das Symbol zeigt keine beobachtete Wolke und keine Wolkenobergrenze.`;
+ c.dataset.top=topHeight;c.dataset.xMin=min;c.dataset.xMax=max;c.dataset.textScale=scale;
+ c.setAttribute('aria-label',(kind==='temp'?'Temperaturprofil':'Auftriebsprofil')+' bis '+topHeight+' m mit '+entries.map(p=>p.title+': '+p.detail).join('; '));
 }
+
 
 let az=-.55,el=.40,viewZoom=1,panX=0,panY=0, perspective=true;
 let lightPower=.75,gloss=true;
@@ -368,7 +414,7 @@ function drawWind(w0,w6,shear){
  ctx.fillStyle='#cbd8e5';ctx.fillText(`0–6 km Bulk-Shear: ${shear.toFixed(1)} m/s`,22,H-14);
 }
 
-function render(){for(const [id,,,,,,unit] of defs)document.getElementById('o_'+id).textContent=state[id]+ ' '+unit;let pro=profile(state.gamma),d=diagnostics(pro);chart(pro,'temp');chart(pro,'buoy');updateFlightSummary(pro);validation(pro);let fmt=x=>x===null?'–':`${Math.round(x).toLocaleString('de-DE')} m`;let metrics=[['LCL',fmt(d.lcl)],['LFC',fmt(d.lfc)],['EL',fmt(d.el)],['CAPE',`${Math.round(d.cape)} J/kg`],['CIN',`${Math.round(d.cin)} J/kg`],['Auftrieb oben',`${pro.rows.at(-1).B.toFixed(3)} m/s²`],['Druck oben',`${(pro.rows.at(-1).p/100).toFixed(0)} hPa`],['LCL 125-m-Regel',`${Math.round(125*(state.t0-state.td0))} m`]];document.getElementById('metrics').innerHTML=metrics.map(([k,v])=>`<div class="metric"><small>${k}</small><b>${v}</b></div>`).join('');document.getElementById('summary').textContent=d.lfc===null?'Im gewählten Profil wird bis zur Modellobergrenze kein Niveau freier Konvektion erreicht.':`Freie Konvektion ab ca. ${fmt(d.lfc)}; ${d.el===null?'das Gleichgewichtsniveau liegt oberhalb der Modellobergrenze oder ist nicht erreicht.':'Gleichgewichtsniveau bei '+fmt(d.el)+'.'}`;
+function render(){for(const [id,,,,,,unit] of defs)document.getElementById('o_'+id).textContent=state[id]+ ' '+unit;let pro=profile(state.gamma),d=diagnostics(pro);updateChartControls(pro);chart(pro,'temp');chart(pro,'buoy');updateFlightSummary(pro);validation(pro);let fmt=x=>x===null?'–':`${Math.round(x).toLocaleString('de-DE')} m`;let metrics=[['LCL',fmt(d.lcl)],['LFC',fmt(d.lfc)],['EL',fmt(d.el)],['CAPE',`${Math.round(d.cape)} J/kg`],['CIN',`${Math.round(d.cin)} J/kg`],['Auftrieb oben',`${pro.rows.at(-1).B.toFixed(3)} m/s²`],['Druck oben',`${(pro.rows.at(-1).p/100).toFixed(0)} hPa`],['LCL 125-m-Regel',`${Math.round(125*(state.t0-state.td0))} m`]];document.getElementById('metrics').innerHTML=metrics.map(([k,v])=>`<div class="metric"><small>${k}</small><b>${v}</b></div>`).join('');document.getElementById('summary').textContent=d.lfc===null?'Im gewählten Profil wird bis zur Modellobergrenze kein Niveau freier Konvektion erreicht.':`Freie Konvektion ab ca. ${fmt(d.lfc)}; ${d.el===null?'das Gleichgewichtsniveau liegt oberhalb der Modellobergrenze oder ist nicht erreicht.':'Gleichgewichtsniveau bei '+fmt(d.el)+'.'}`;
  const cap=d.cape, inhibition=Math.abs(d.cin), spread=state.t0-state.td0;
  // Wind components are meteorological: direction FROM; vector magnitude in m/s.
  function uv(speed,deg){let r=deg*Math.PI/180;return [-speed*Math.sin(r),-speed*Math.cos(r)]}
@@ -528,7 +574,7 @@ const fullButton=document.getElementById('fullView');
 function toggleFull(){const full=document.getElementById('surfacePanel').classList.toggle('fullview');document.body.classList.toggle('viewlocked',full);fullButton.textContent=full?'✕ Schließen':'🔍 Vollbild';requestAnimationFrame(drawSurface)}
 fullButton.addEventListener('click',toggleFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('surfacePanel').classList.contains('fullview'))toggleFull()});
 document.getElementById('showThresholds').addEventListener('change',drawSurface);document.getElementById('textSize').addEventListener('input',e=>{textScale=Number(e.target.value)/100;document.getElementById('textSizeValue').textContent=e.target.value+' %';drawSurface()});
-const preferenceInputs=['smoothSurface','showThresholds','textSize','perspective','focal','mesh','lighting','specular','stormColors'];
+const preferenceInputs=['chartTop','chartZoom','chartSize','chartText','smoothSurface','showThresholds','textSize','perspective','focal','mesh','lighting','specular','stormColors'];
 function saveSettings(){
  if(!settingsReady)return;
  const controls={};for(const id of preferenceInputs){const e=document.getElementById(id);controls[id]=e.type==='checkbox'?e.checked:e.value}
@@ -551,6 +597,9 @@ function restoreSettings(){
  lightPower=+document.getElementById('lighting').value/100;gloss=document.getElementById('specular').checked;textScale=+document.getElementById('textSize').value/100;
  document.getElementById('textSizeValue').textContent=Math.round(textScale*100)+' %';document.getElementById('lightingValue').textContent=Math.round(lightPower*100)+' %';document.getElementById('focalValue').textContent=cameraDistance;
 }
+for(const id of ['chartTop','chartZoom','chartSize','chartText'])document.getElementById(id).addEventListener('input',()=>{const pro=profile(state.gamma);updateChartControls(pro);chart(pro,'temp');chart(pro,'buoy')});
+document.getElementById('chartFocus').onclick=()=>{const pro=profile(state.gamma);document.getElementById('chartTop').value=lowerChartFocus(pro);document.getElementById('chartZoom').value=100;updateChartControls(pro);chart(pro,'temp');chart(pro,'buoy');queueSaveSettings()};
+document.getElementById('chartAll').onclick=()=>{document.getElementById('chartTop').value=state.top;document.getElementById('chartZoom').value=100;const pro=profile(state.gamma);updateChartControls(pro);chart(pro,'temp');chart(pro,'buoy');queueSaveSettings()};
 restoreSettings();settingsReady=true;
 document.addEventListener('input',queueSaveSettings);document.addEventListener('change',queueSaveSettings);
 window.addEventListener('pagehide',saveSettings);window.addEventListener('beforeunload',saveSettings);
