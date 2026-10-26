@@ -50,8 +50,19 @@ module.exports = window => {
         const savedLift=state.lift;state.lift=0;render();
         if(document.getElementById('temp').dataset.cloud!=='outline'||document.getElementById('buoy').dataset.cloud!=='outline')throw Error('Unreached LCL cloud must be hollow');
         state.lift=3000;render();
+        if(document.getElementById('surface').dataset.cloud!=='filled'||document.getElementById('surface').dataset.cloudForm!=='cumuliform')throw Error('3D cloud scenario not updated');
         if(document.getElementById('temp').dataset.cloud!=='filled'||document.getElementById('buoy').dataset.cloud!=='filled')throw Error('Reached LCL cloud must be filled');
         state.lift=savedLift;render();
+        if(document.getElementById('surface').dataset.cloud!=='outline'||!document.getElementById('surfaceHelpKeys').textContent.includes('MSL'))throw Error('3D cloud annotation missing');
+        const helpCanvas=document.getElementById('temp'),region=graphHelpRegions.get('temp').find(r=>r.keys[0]==='LCL'),rect=helpCanvas.getBoundingClientRect();
+        const hx=rect.left+(region.x+region.width/2)*rect.width/helpCanvas.width,hy=rect.top+(region.y+region.height/2)*rect.height/helpCanvas.height;
+        helpCanvas.dispatchEvent(new PointerEvent('pointermove',{clientX:hx,clientY:hy,pointerType:'mouse',bubbles:true}));
+        const tip=document.getElementById('graphTooltip');
+        if(tip.hidden||!tip.textContent.includes('Lifting Condensation Level')||!tip.textContent.includes('Fliegerische Einordnung'))throw Error('Canvas hover tooltip missing');
+        document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));if(!tip.hidden)throw Error('Escape did not close tooltip');
+        helpCanvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:hx,clientY:hy,pointerType:'touch',bubbles:true}));helpCanvas.dispatchEvent(new PointerEvent('pointerup',{clientX:hx,clientY:hy,pointerType:'touch',bubbles:true}));
+        if(tip.hidden||!graphHelpPinned)throw Error('Touch tooltip missing');hideGraphTooltip();
+        const keyButton=[...document.querySelectorAll('#tempHelpKeys button')].find(b=>b.textContent==='LCL');keyButton.focus();keyButton.dispatchEvent(new FocusEvent('focus'));if(tip.hidden||!tip.textContent.includes('Kondensationsniveau')||document.activeElement!==keyButton)throw Error('Keyboard tooltip missing');keyButton.blur();hideGraphTooltip();window.scrollTo(0,0);
         const originalMesh=JSON.stringify(cached),originalProfile=JSON.stringify(sounding),originalMetrics=document.getElementById('metrics').textContent;
         document.getElementById('smoothSurface').checked=false;drawSurface();
         document.getElementById('smoothSurface').checked=true;drawSurface();
@@ -103,6 +114,10 @@ module.exports = window => {
       await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
       await fs.writeFile(path.join(output,'diagram-focus.png'),(await window.webContents.capturePage()).toPNG());
       await fs.writeFile(path.join(output,'chart-checks.json'),JSON.stringify(chartChecks,null,2));
+      await window.webContents.executeJavaScript("showGraphTooltip('CAPE',window.innerWidth-430,300,true,'temp')");
+      await fs.writeFile(path.join(output,'graph-tooltip.png'),(await window.webContents.capturePage()).toPNG());
+      await window.webContents.executeJavaScript('hideGraphTooltip()');
+
       window.setMinimumSize(320,400);window.setContentSize(390,844);
       await window.webContents.executeJavaScript("document.getElementById('viewportSettingsButton').click();document.getElementById('surfacePanel').scrollIntoView();new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
       const mobile=await window.webContents.executeJavaScript("(()=>{const p=document.getElementById('surfacePanel').getBoundingClientRect(),c=document.getElementById('surface').getBoundingClientRect();return {width:p.width,height:p.height,inside:c.bottom<=p.bottom}})()");

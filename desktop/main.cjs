@@ -13,7 +13,7 @@ protocol.registerSchemesAsPrivileged([{scheme: 'labor', privileges: {standard: t
 function external(raw) {
   try {
     const url = new URL(raw);
-    if (url.protocol === 'https:' && ['weather.uwyo.edu', 'opendata.dwd.de', 'github.com', 'www.weather.gov', 'www.noaa.gov'].includes(url.hostname)) shell.openExternal(url.href);
+    if (url.protocol === 'https:' && ['weather.uwyo.edu', 'opendata.dwd.de', 'github.com', 'www.weather.gov', 'www.noaa.gov', 'www.faa.gov', 'origin-west-www-spc.woc.noaa.gov'].includes(url.hostname)) shell.openExternal(url.href);
   } catch {}
 }
 
