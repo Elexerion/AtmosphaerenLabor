@@ -39,6 +39,14 @@ module.exports = window => {
         if(!flight.includes('31.346')||!flight.includes('Landepunkt'))throw Error('Flight endpoint summary is missing');
         if(!${live}&&!flight.includes('00:35:26'))throw Error('Decoded endpoint time is missing');
         if(!document.getElementById('tempPoints').textContent.includes('LCL')||!document.getElementById('buoyPoints').textContent.includes('LFC')||!document.getElementById('tempCloudNote').textContent.includes('keine beobachtete Wolke'))throw Error('Diagram annotations are missing');
+        const baselineState=JSON.stringify(state),baselineProfile=JSON.stringify(profile(state.gamma)),baselineMesh=JSON.stringify(cached),sourceRows=JSON.stringify(sounding);
+        if(sliders.dataset.origin!=='sounding'||!document.getElementById('reset').textContent.includes('Ballondaten'))throw Error('Loaded profile must be green and restorable');
+        if(getComputedStyle(document.getElementById('t0')).accentColor!=='rgb(57, 189, 112)')throw Error('Loaded sliders not green');
+        const input=document.getElementById('t0');input.value=state.t0+1;input.dispatchEvent(new Event('input',{bubbles:true}));
+        if(sliders.dataset.origin!=='custom'||getComputedStyle(input).accentColor!=='rgb(73, 167, 235)')throw Error('Modified sliders not blue');
+        if(JSON.stringify(profile(state.gamma))===baselineProfile||JSON.stringify(cached)===baselineMesh)throw Error('Loaded profile sliders did not change calculations');
+        document.getElementById('reset').click();
+        if(JSON.stringify(state)!==baselineState||JSON.stringify(profile(state.gamma))!==baselineProfile||JSON.stringify(cached)!==baselineMesh||sliders.dataset.origin!=='sounding'||JSON.stringify(sounding)!==sourceRows)throw Error('Original sounding not restored exactly');
         const savedLift=state.lift;state.lift=0;render();
         if(document.getElementById('temp').dataset.cloud!=='outline'||document.getElementById('buoy').dataset.cloud!=='outline')throw Error('Unreached LCL cloud must be hollow');
         state.lift=3000;render();
@@ -101,6 +109,11 @@ module.exports = window => {
       if(!mobile.inside||mobile.width>390||mobile.height>844)throw Error('Small viewport overflow: '+JSON.stringify(mobile));
       await fs.writeFile(path.join(output,'windows-mobile.png'),(await window.webContents.capturePage()).toPNG());
       await fs.writeFile(path.join(output,'layout-checks.json'),JSON.stringify({closed,mobile},null,2));
+      await window.webContents.executeJavaScript(`(()=>{
+        document.getElementById('soundingOff').click();
+        state.t0=25;render();document.getElementById('reset').click();
+        if(sounding!==null||sliders.dataset.origin!=='custom'||!document.getElementById('reset').textContent.includes('Grundeinstellungen')||defs.some(([id,,value])=>state[id]!==value))throw Error('Ideal defaults not restored');
+      })()`);
       clearTimeout(timeout);app.exit(0);
     } catch(error) {console.error(error);clearTimeout(timeout);app.exit(1)}
   });

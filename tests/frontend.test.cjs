@@ -10,7 +10,7 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','adjustedSoundingPoint']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -80,4 +80,36 @@ test('pressure is vertical and buoyancy horizontal in the 3D geometry',()=>{
   const base=context.surfaceCoordinates(.6,1000,0),higher=context.surfaceCoordinates(.6,500,0),positive=context.surfaceCoordinates(.6,1000,.1);
   assert.equal(base[0],higher[0]);assert.equal(base[1],higher[1]);assert.ok(higher[2]>base[2]);
   assert.equal(positive[0],base[0]);assert.equal(positive[2],base[2]);assert.ok(positive[1]>base[1]);
+});
+
+
+test('loaded profile remains exact at baseline and each thermodynamic slider changes its scenario',()=>{
+  const physics=vm.createContext({console});
+  vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),physics);
+  vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),physics);
+  vm.runInContext(script.split('\n').find(line=>line.startsWith('function interpSound(')),physics);
+  for(const name of ['adjustedSoundingPoint','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
+  const baseline={t0:10,td0:6,p0:993,gamma:.65,top:15000,rhDecay:2000};
+  const raw=fixture().levels,base=raw[0].height_m;
+  physics.sounding=raw.map(r=>({z:r.height_m-base,p:r.pressure_hpa*100,T:r.temp_c+273.15,Td:r.dewpoint_c+273.15}));
+  physics.soundingBaseline={...baseline};physics.state={...baseline};
+  const original=JSON.stringify(physics.sounding),pro=physics.profile(.65),d=physics.diagnostics(pro);
+  assert.equal(d.lcl,480);assert.ok(Math.abs(d.lfc-1436)<2);assert.ok(Math.abs(d.el-2436)<2);assert.ok(Math.abs(d.cape-10)<1);assert.ok(Math.abs(d.cin+59)<1);
+  assert.equal(pro.rows[0].T,raw[0].temp_c+273.15);assert.equal(pro.rows[0].p,raw[0].pressure_hpa*100);
+  for(const row of pro.rows)assert.ok(Math.abs(row.Te-physics.interpSound(row.z,'T'))<1e-9);
+  for(const [key,value] of [['t0',11],['td0',7],['p0',1003],['gamma',.7],['rhDecay',2250]]){
+    physics.state={...baseline,[key]:value};const changed=physics.profile(physics.state.gamma);
+    assert.notEqual(JSON.stringify(changed),JSON.stringify(pro),key+' must affect the calculated profile');
+  }
+  physics.state={...baseline,gamma:.7};assert.ok(Math.abs(physics.profile(.7).rows[100].Te-(pro.rows[100].Te-1))<1e-9);
+  physics.state={...baseline};assert.equal(JSON.stringify(physics.profile(.65)),JSON.stringify(pro));assert.equal(JSON.stringify(physics.sounding),original);
+});
+
+
+test('cloud forms remain conditional, with a stated condensation base and no invented cloud top',()=>{
+  const rows=[-.02,-.01,.02,-.02].map((B,i)=>({z:i*1000,B})),pro={rows,lcl:500};
+  const unforced=context.cloudFormHint(pro,0);assert.equal(unforced.state,'outline');assert.equal(unforced.form,'stratiform');assert.equal(unforced.base,500);
+  assert.equal(context.cloudFormHint(pro,1000).form,'stratiform');
+  const convective=context.cloudFormHint(pro,2000);assert.equal(convective.form,'cumuliform');assert.equal(convective.state,'filled');assert.equal(convective.top,undefined);
+  assert.equal(context.cloudFormHint({...pro,lcl:null},3000).form,null);
 });
