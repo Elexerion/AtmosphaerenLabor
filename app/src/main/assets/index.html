@@ -122,7 +122,7 @@ const graphTerms={
  CIN:{title:'CIN – Convective Inhibition (Konvektionshemmung)',meaning:'Konvektionshemmung in J/kg: Die App zeigt die negative Auftriebsenergie unterhalb des LFC.',relation:'Je größer der Betrag des negativen Werts, desto größer die Energiebarriere für das Modell-Luftpaket. Erzwungene Hebung kann helfen, das LFC zu erreichen; Hebungshöhe und Energie sind unterschiedliche Größen.',flight:'Große CIN kann bodennahe Konvektion unterdrücken. Sie beweist keine ruhige Luft und schließt Wind- oder andere Turbulenzursachen nicht aus.',source:'https://www.weather.gov/media/lmk/soo/svr_parameters.pdf'},
  B:{title:'B – Buoyancy (Auftriebsbeschleunigung)',meaning:'Auftrieb des Modell-Luftpakets relativ zur Umgebung, in m/s². Positiv: aufwärts beschleunigend; negativ: bremsend.',relation:'Die Nullinie B = 0 trennt die Vorzeichen. Passende Übergänge definieren LFC und EL; das Höhenintegral liefert CAPE beziehungsweise CIN.',flight:'B ist eine Beschleunigung, keine Vertikalgeschwindigkeit. Es ist nicht die Steigleistung eines Flugzeugs und berücksichtigt dessen Masse, Widerstand und Antrieb nicht.',source:'https://www.weather.gov/media/lmk/soo/svr_parameters.pdf'},
  MSL:{title:'MSL – Mean Sea Level (mittlerer Meeresspiegel)',meaning:'Höhe über dem mittleren Meeresspiegel.',relation:'Die Diagrammhöhen beziehen sich auf Messbasis oder Modellboden. Bei Sondendaten ergibt sich die angegebene MSL-Basis aus LCL-Höhe plus Stationshöhe.',flight:'Für Höhenvergleiche muss derselbe Bezug verwendet werden. Höhe über der Messstation ist nicht automatisch Höhe über dem Gelände entlang einer Flugstrecke.'},
- hPa:{title:'hPa – Hektopascal',meaning:'Einheit des Luftdrucks. Im 3D-Modell nimmt der Druck auf der senkrechten Achse nach oben ab.',relation:'Die Zuordnung von Druck zu geometrischer Höhe hängt vom Temperatur- und Feuchteprofil ab. Dieselbe Druckfläche liegt nicht immer auf derselben Höhe.',flight:'Ein druckbasierter Höhenmesser und eine geometrische Höhe sind unterschiedliche Größen. Das Diagramm liefert keine Höhenmessereinstellung.'},
+ hPa:{title:'hPa – Hektopascal',meaning:'Einheit des Luftdrucks. Im 3D-Modell steht der Druck als Zusatzwert an jeder geometrischen Höhenmarke.',relation:'Die Zuordnung von Druck zu geometrischer Höhe hängt vom Temperatur- und Feuchteprofil ab. Dieselbe Druckfläche liegt nicht immer auf derselben Höhe.',flight:'Ein druckbasierter Höhenmesser und eine geometrische Höhe sind unterschiedliche Größen. Das Diagramm liefert keine Höhenmessereinstellung.'},
  Cu:{title:'Cu – Cumulus (Quellwolkenform)',meaning:'Cumulusartige Form: Der Modellhinweis deutet auf möglichen freien konvektiven Aufstieg hin.',relation:'Die Einordnung nutzt LCL, LFC, CAPE und eingestellte Hebung. Gefüllt beziehungsweise hohl zeigt separat, ob die Kondensationsbasis erreichbar ist.',flight:'Quellwolken können mit konvektiven Auf- und Abwinden verbunden sein. Die Form ist hier eine Heuristik, keine beobachtete Wolkengattung oder bestimmte Turbulenzstärke.',source:'https://www.noaa.gov/jetstream/clouds/four-core-types-of-clouds'},
  St:{title:'St – Stratus (Schichtwolkenform)',meaning:'Stratusartige Form: Bei erzwungener Sättigung ohne erreichten freien Auftrieb kommt eher eine schichtartige Form infrage.',relation:'Die Basis ist das LCL; das Modell bestimmt weder Bedeckungsgrad noch Wolkenobergrenze. Die hohle Kontur zeigt eine noch nicht erreichte Kondensationsbasis.',flight:'Eine tatsächlich vorhandene Schicht kann den wolkenfreien Höhenbereich begrenzen. Das Symbol allein sagt weder Sichtweite noch Flugbedingungen voraus.',source:'https://www.noaa.gov/jetstream/clouds/four-core-types-of-clouds'},
  zero:{title:'0 °C · Gefrierniveau',meaning:'Markierter erster 0-°C-Durchgang der Umgebung oder des Modell-Luftpakets. Beide Kurven können unterschiedliche Höhen ergeben.',relation:'Wolkenbasis und Gefrierniveau sind voneinander unabhängig. Inversionen können weitere 0-°C-Durchgänge erzeugen; markiert ist jeweils der erste.',flight:'Unterkühlte flüssige Tropfen können bei Kontakt am Flugzeug gefrieren. Die 0-°C-Linie allein weist keine Vereisung nach: Feuchte, Wasserphase und Tropfengröße sind ebenfalls entscheidend.',source:'https://www.faa.gov/air_traffic/publications/atpubs/AIM/aim0701.html'},
@@ -134,9 +134,10 @@ graphTerms.ft={title:'ft – foot / feet (Fuß)',meaning:'Fuß ist eine Längene
 graphTerms['J/kg']={...graphTerms.CAPE,title:'J/kg – Joule pro Kilogramm',meaning:'Energie pro Masse des Luftpakets. CAPE und CIN werden in dieser Einheit angegeben.'};
 graphTerms['m/s²']={...graphTerms.B,title:'m/s² – Meter pro Sekunde zum Quadrat',meaning:'Einheit der Beschleunigung: Änderung einer Geschwindigkeit pro Sekunde.'};
 graphTerms['m/s']={...graphTerms.wind,title:'m/s – Meter pro Sekunde',meaning:'Einheit einer Geschwindigkeit. Im Winddiagramm sind dies die Komponenten der horizontalen Luftbewegung.'};
+graphTerms.Höhe={title:'Geometrische Höhe mit zugeordnetem Profildruck',meaning:'Gleiche Abstände der senkrechten 3D-Achse stehen für gleiche Höhenunterschiede in Metern über Messbasis oder Modellboden.',relation:'Der Druck jeder Höhenmarke wird aus dem ausgewählten Profil interpoliert. Bei anderen Temperatur-, Feuchte- und Druckbedingungen ändert sich die Zuordnung; außerhalb des Profils wird kein Druck extrapoliert.',flight:'Höhe über Messbasis und MSL haben unterschiedliche Bezugspunkte. Die Druckwerte ersetzen keine Höhenmessereinstellung.'};
 graphTerms.Auftrieb=graphTerms.B;graphTerms.Druck=graphTerms.hPa;graphTerms.u={...graphTerms.wind,title:'u – zonale Windkomponente (Ost–West)',meaning:'Der positive u-Wert beschreibt Luftbewegung nach Osten, ein negativer Wert nach Westen.'};graphTerms.v={...graphTerms.wind,title:'v – meridionale Windkomponente (Nord–Süd)',meaning:'Der positive v-Wert beschreibt Luftbewegung nach Norden, ein negativer Wert nach Süden.'};graphTerms['Bulk-Shear']=graphTerms.wind;
 function graphTermKeys(text){
- return [...new Set((String(text).match(/\b(?:LCL|LFC|EL|CAPE|CIN|MSL|Cu|St|B|hPa|u|v|ft)\b|0\s?°C|Bulk-Shear|Gradient|Taupunkt|Auftrieb|Druck|J\/kg|m\/s²|m\/s/g)||[]).map(k=>/^0/.test(k)?'zero':k))];
+ return [...new Set((String(text).match(/\b(?:LCL|LFC|EL|CAPE|CIN|MSL|Cu|St|B|hPa|u|v|ft)\b|0\s?°C|Bulk-Shear|Gradient|Taupunkt|Auftrieb|Druck|Höhe|J\/kg|m\/s²|m\/s/g)||[]).map(k=>/^0/.test(k)?'zero':k))];
 }
 function graphHelpHit(regions,rect,width,height,clientX,clientY){
  if(!rect.width||!rect.height)return null;
@@ -370,8 +371,8 @@ function smoothSurfaceMesh(mesh){
   return {...point,B:weighted/total};
  }));
 }
-function surfaceCoordinates(gradient,pressure,buoyancy){
- return [(gradient-.6)/.8,Math.max(-1.5,Math.min(1.5,buoyancy/.18)),(650-pressure)/400];
+function surfaceCoordinates(gradient,height,buoyancy,top=9000){
+ return [(gradient-.6)/.8,Math.max(-1.5,Math.min(1.5,buoyancy/.18)),(height/top-.5)*1.8];
 }
 function drawSurface(){let [c,ctx]=canvas('surface'),W=c.width,H=c.height;
  const smooth=document.getElementById('smoothSurface').checked;
@@ -379,17 +380,17 @@ function drawSurface(){let [c,ctx]=canvas('surface'),W=c.width,H=c.height;
  const surfaceMesh=smooth?smoothedSurfaceCache:cached;
  // All coordinates are projected relative to a common center; auto-fit ensures the full
  // graph is visible at 100% zoom, including the lowest-pressure and lowest-buoyancy corners.
- function raw(x,y,z){const [X,Y,Z]=surfaceCoordinates(x,y,z);let xx=X*Math.cos(az)-Y*Math.sin(az),depth=X*Math.sin(az)+Y*Math.cos(az);return [xx,depth*Math.sin(el)-Z*Math.cos(el),depth*Math.cos(el)+Z*Math.sin(el)]}
+ function raw(x,y,z){const [X,Y,Z]=surfaceCoordinates(x,y,z,state.top);let xx=X*Math.cos(az)-Y*Math.sin(az),depth=X*Math.sin(az)+Y*Math.cos(az);return [xx,depth*Math.sin(el)-Z*Math.cos(el),depth*Math.cos(el)+Z*Math.sin(el)]}
  // Perspective projection: camera at positive view-depth; distant points appear smaller.
 
  function camera(r){let f=perspective?cameraDistance/(cameraDistance+r[2]):1;return [r[0]*f,r[1]*f,r[2]]}
- let bounds=[];for(let row of surfaceMesh)for(let v of row)if(v)bounds.push(camera(raw(v.gam,v.p,v.B)));
+ let bounds=[];for(let row of surfaceMesh)for(let v of row)if(v)bounds.push(camera(raw(v.gam,v.z,v.B)));
  // The selected profile and all axes participate in the fit; reserve room for labels.
  const selectedRows=profile(state.gamma).rows;
- for(const r of selectedRows)bounds.push(camera(raw(state.gamma,r.p/100,r.B)));
- for(let x of [-.2,1.4])for(let y of [300,1013])bounds.push(camera(raw(x,y,0)));
- for(let z of [-.12,.12])bounds.push(camera(raw(-.2,1013,z)));
- for(let p of [300,1013])bounds.push(camera(raw(1.4,p,.12)));
+ for(const r of selectedRows)bounds.push(camera(raw(state.gamma,r.z,r.B)));
+ for(let x of [-.2,1.4])for(let y of [0,state.top])bounds.push(camera(raw(x,y,0)));
+ for(let z of [-.12,.12])bounds.push(camera(raw(-.2,0,z)));
+ for(let height of [0,state.top])bounds.push(camera(raw(1.4,height,.12)));
  let xMin=Math.min(...bounds.map(v=>v[0])),xMax=Math.max(...bounds.map(v=>v[0]));let yMin=Math.min(...bounds.map(v=>v[1])),yMax=Math.max(...bounds.map(v=>v[1]));
  const panel=document.getElementById('surfacePanel'),settings=document.getElementById('viewportSettings');
  const width=Math.max(1,c.getBoundingClientRect().width),scaleToScreen=width/W;
@@ -404,19 +405,20 @@ function drawSurface(){let [c,ctx]=canvas('surface'),W=c.width,H=c.height;
  const bottom=H-30,top=42;
  let baseScale=Math.min((W-200)/Math.max(.01,xMax-xMin),(bottom-top)/Math.max(.01,yMax-yMin));
  function project(x,y,z){let r=camera(raw(x,y,z));return [W*.5+(r[0]-(xMin+xMax)/2)*baseScale*viewZoom+panX,bottom+(r[1]-yMax)*baseScale*viewZoom+panY]}
- // Pressure rises vertically towards lower values at the right rear edge.
- const rearAxis=[1013,1000,900,800,700,600,500,400,300].map(v=>project(1.4,v,.12));
+ // Equal geometric height increments are vertical; pressure is paired from the selected profile.
+ const heightTicks=heightPressureTicks(selectedRows,state.top);
+ const rearAxis=heightTicks.map(t=>project(1.4,t.z,.12));
  line(ctx,rearAxis,'#91a9c2',1.5);
  const normalCache=new Map();
  function normalAt(i,j){
   const point=surfaceMesh[i][j];if(normalCache.has(point))return normalCache.get(point);
   const left=surfaceMesh[i-1]?.[j]||point,right=surfaceMesh[i+1]?.[j]||point,above=surfaceMesh[i]?.[j-1]||point,below=surfaceMesh[i]?.[j+1]||point;
-  const a=raw(left.gam,left.p,left.B),b=raw(right.gam,right.p,right.B),d=raw(above.gam,above.p,above.B),e=raw(below.gam,below.p,below.B);
+  const a=raw(left.gam,left.z,left.B),b=raw(right.gam,right.z,right.B),d=raw(above.gam,above.z,above.B),e=raw(below.gam,below.z,below.B);
   const u=b.map((v,k)=>v-a[k]),v=e.map((value,k)=>value-d[k]);
   const n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],length=Math.hypot(...n)||1,result=n.map(value=>value/length);
   normalCache.set(point,result);return result;
  }
- let cells=[];for(let i=0;i<surfaceMesh.length-1;i++)for(let j=0;j<surfaceMesh[i].length-1;j++){let a=surfaceMesh[i][j],b=surfaceMesh[i+1][j],d=surfaceMesh[i][j+1],e=surfaceMesh[i+1][j+1];if(!a||!b||!d||!e)continue;let q=[a,b,e,d].map(v=>project(v.gam,v.p,v.B));let depth=[a,b,e,d].reduce((s,v)=>s+raw(v.gam,v.p,v.B)[2],0)/4;let avg=(a.B+b.B+d.B+e.B)/4;cells.push({q,depth,avg,vertices:[a,b,e,d],normals:smooth?[normalAt(i,j),normalAt(i+1,j),normalAt(i+1,j+1),normalAt(i,j+1)]:null,storm:(a.storm+b.storm+d.storm+e.storm)/4})}
+ let cells=[];for(let i=0;i<surfaceMesh.length-1;i++)for(let j=0;j<surfaceMesh[i].length-1;j++){let a=surfaceMesh[i][j],b=surfaceMesh[i+1][j],d=surfaceMesh[i][j+1],e=surfaceMesh[i+1][j+1];if(!a||!b||!d||!e)continue;let q=[a,b,e,d].map(v=>project(v.gam,v.z,v.B));let depth=[a,b,e,d].reduce((s,v)=>s+raw(v.gam,v.z,v.B)[2],0)/4;let avg=(a.B+b.B+d.B+e.B)/4;cells.push({q,depth,avg,vertices:[a,b,e,d],normals:smooth?[normalAt(i,j),normalAt(i+1,j),normalAt(i+1,j+1),normalAt(i,j+1)]:null,storm:(a.storm+b.storm+d.storm+e.storm)/4})}
  cells.sort((a,b)=>b.depth-a.depth);
  // Physically motivated directional illumination in the rotated view frame.
  // Lambertian diffuse reflection plus a bounded Blinn-Phong highlight;
@@ -426,7 +428,7 @@ function drawSurface(){let [c,ctx]=canvas('surface'),W=c.width,H=c.height;
  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
  const L=norm([-0.48,-0.70,1.0]),V=[0,0,-1],Hvec=norm([L[0]+V[0],L[1]+V[1],L[2]+V[2]]);
  for(let cell of cells){ctx.beginPath();ctx.moveTo(...cell.q[0]);for(let k=1;k<4;k++)ctx.lineTo(...cell.q[k]);ctx.closePath();
-   const verts=cell.vertices.map(v=>raw(v.gam,v.p,v.B));
+   const verts=cell.vertices.map(v=>raw(v.gam,v.z,v.B));
    const e1=verts[1].map((v,i)=>v-verts[0][i]),e2=verts[3].map((v,i)=>v-verts[0][i]);
    let n=cell.normals?norm([0,1,2].map(k=>cell.normals.reduce((sum,value)=>sum+value[k],0))):norm(cross(e1,e2));if(n[2]>0)n=n.map(v=>-v); // upward-facing toward viewer convention
    const diffuse=Math.abs(dot(n,L));
@@ -441,22 +443,23 @@ function drawSurface(){let [c,ctx]=canvas('surface'),W=c.width,H=c.height;
    if(meshResolution<=48){ctx.strokeStyle='#ffffff10';ctx.lineWidth=.4;ctx.stroke()}
  }
  // Numeric axis ticks, projected into the same camera frame.
- const axes=[{values:[-.2,0,.2,.4,.6,.8,1,1.2,1.4],point:v=>[v,1013,0],fmt:v=>v.toFixed(1),label:'Gradient °C/100 m'},
- {values:[1000,900,800,700,600,500,400,300],point:v=>[1.4,v,.12],fmt:v=>String(v),label:'Druck hPa'},
- {values:[-.12,-.08,-.04,0,.04,.08,.12],point:v=>[-.2,1013,v],fmt:v=>v.toFixed(2),label:'Auftrieb m/s²'}];
- for(let ax of axes){line(ctx,ax.values.map(v=>project(...ax.point(v))),'#91a9c2',1.5);for(let v of ax.values){const q=project(...ax.point(v));ctx.beginPath();ctx.arc(q[0],q[1],2.4,0,2*Math.PI);ctx.fillStyle='#e5edf8';ctx.fill();txt(ctx,ax.fmt(v),Math.max(3,Math.min(W-55,q[0]+5)),Math.max(12,Math.min(H-3,q[1]-7)),'#c9daee',12)}let q=project(...ax.point(ax.values.at(-1)));txt(ctx,ax.label,Math.max(4,Math.min(W-180,q[0]-15)),Math.max(15,Math.min(H-5,q[1]+(ax.label.startsWith('Druck')?-25:22))),'#e5edf8',15)}
+ const axes=[{values:[-.2,0,.2,.4,.6,.8,1,1.2,1.4],point:v=>[v,0,0],fmt:v=>v.toFixed(1),label:'Gradient °C/100 m'},
+ {values:heightTicks,point:t=>[1.4,t.z,.12],fmt:t=>Math.round(t.z).toLocaleString('de-DE')+' m · '+(t.pressure_hpa===null?'—':Math.round(t.pressure_hpa))+' hPa',label:'Höhe m · Druck hPa',vertical:true},
+ {values:[-.12,-.08,-.04,0,.04,.08,.12],point:v=>[-.2,0,v],fmt:v=>v.toFixed(2),label:'Auftrieb m/s²'}];
+ for(let ax of axes){line(ctx,ax.values.map(v=>project(...ax.point(v))),'#91a9c2',1.5);for(let v of ax.values){const q=project(...ax.point(v));ctx.beginPath();ctx.arc(q[0],q[1],2.4,0,2*Math.PI);ctx.fillStyle='#e5edf8';ctx.fill();const label=ax.fmt(v),width=label.length*7.5*textScale;const tx=Math.max(3,Math.min(W-width-5,q[0]+6)),ty=Math.max(12,Math.min(H-3,q[1]-7));if(ax.vertical){ctx.fillStyle='#112239d9';ctx.fillRect(tx-3,ty-13*textScale,width+6,18*textScale)}txt(ctx,label,tx,ty,'#c9daee',12)}let q=project(...ax.point(ax.values.at(-1)));txt(ctx,ax.label,Math.max(4,Math.min(W-220,q[0]-15)),Math.max(15,Math.min(H-5,q[1]+(ax.vertical?-25:22))),'#e5edf8',15)}
+
  // The B=0 contour marks the true stable/unstable tipping boundary.
  // A second threshold indicates the start of the purple convective overlay.
  if(document.getElementById('showThresholds').checked){
-  let contour=[];for(let j=0;j<surfaceMesh[0].length;j++){for(let i=0;i<surfaceMesh.length-1;i++){let a=surfaceMesh[i][j],b=surfaceMesh[i+1][j];if(!a||!b||a.B*b.B>0||a.B===b.B)continue;let f=-a.B/(b.B-a.B);contour.push({p:a.p,g:a.gam+f*(b.gam-a.gam)});break}}
-  contour.sort((a,b)=>b.p-a.p);if(contour.length>1){line(ctx,contour.map(q=>project(q.g,q.p,0)),'#ffffff',2.2);const stride=Math.max(1,Math.ceil(contour.length/6));for(let i=0;i<contour.length;i+=stride){let q=contour[i],pt=project(q.g,q.p,0);ctx.fillStyle='#071526d9';ctx.fillRect(pt[0]+5,pt[1]-20,86,17);txt(ctx,`B=0 · ${q.p.toFixed(0)} hPa`,pt[0]+8,pt[1]-7,'#ffffff',11)}}
-  const pro=profile(state.gamma), d=diagnostics(pro);for(let [key,z] of [['LCL',d.lcl],['LFC',d.lfc],['EL',d.el]]){if(z===null)continue;let r=pro.rows.reduce((best,r)=>Math.abs(r.z-z)<Math.abs(best.z-z)?r:best,pro.rows[0]);let q=project(state.gamma,r.p/100,r.B);ctx.fillStyle='#101a2bee';ctx.fillRect(q[0]+8,q[1]-20,110,18);txt(ctx,`${key} ${Math.round(r.p/100)} hPa`,q[0]+11,q[1]-7,'#fff5aa',12)}
+  let contour=[];for(let j=0;j<surfaceMesh[0].length;j++){for(let i=0;i<surfaceMesh.length-1;i++){let a=surfaceMesh[i][j],b=surfaceMesh[i+1][j];if(!a||!b||a.B*b.B>0||a.B===b.B)continue;let f=-a.B/(b.B-a.B);contour.push({p:a.p+f*(b.p-a.p),z:a.z+f*(b.z-a.z),g:a.gam+f*(b.gam-a.gam)});break}}
+  contour.sort((a,b)=>b.p-a.p);if(contour.length>1){line(ctx,contour.map(q=>project(q.g,q.z,0)),'#ffffff',2.2);const stride=Math.max(1,Math.ceil(contour.length/6));for(let i=0;i<contour.length;i+=stride){let q=contour[i],pt=project(q.g,q.z,0);ctx.fillStyle='#071526d9';ctx.fillRect(pt[0]+5,pt[1]-20,86,17);txt(ctx,`B=0 · ${q.p.toFixed(0)} hPa`,pt[0]+8,pt[1]-7,'#ffffff',11)}}
+  const pro=profile(state.gamma), d=diagnostics(pro);for(let [key,z] of [['LCL',d.lcl],['LFC',d.lfc],['EL',d.el]]){if(z===null)continue;let r=rowAtHeight(pro.rows,z);let q=project(state.gamma,r.z,r.B);ctx.fillStyle='#101a2bee';ctx.fillRect(q[0]+8,q[1]-20,110,18);txt(ctx,`${key} ${Math.round(r.p/100)} hPa`,q[0]+11,q[1]-7,'#fff5aa',12)}
  }
 
- let sel=profile(state.gamma).rows;line(ctx,sel.map(r=>project(state.gamma,r.p/100,r.B)),'#fff09b73',4);
- for(const [label,r] of [['Luftpaketstart',sel[0]],['Ansichtsende',sel.at(-1)]]){const q=project(state.gamma,r.p/100,r.B);ctx.fillStyle='#fff09b';ctx.beginPath();ctx.arc(q[0],q[1],4,0,Math.PI*2);ctx.fill();const x=Math.max(6,Math.min(W-230,q[0]+12)),y=Math.max(20,Math.min(H-10,q[1]+18));ctx.fillStyle='#101a2bee';ctx.fillRect(x-4,y-16,225,21);txt(ctx,`${label} · ${Math.round(r.z).toLocaleString('de-DE')} m`,x,y,'#fff09b',12)}
+ let sel=profile(state.gamma).rows;line(ctx,sel.map(r=>project(state.gamma,r.z,r.B)),'#fff09b73',4);
+ for(const [label,r] of [['Luftpaketstart',sel[0]],['Ansichtsende',sel.at(-1)]]){const q=project(state.gamma,r.z,r.B);ctx.fillStyle='#fff09b';ctx.beginPath();ctx.arc(q[0],q[1],4,0,Math.PI*2);ctx.fill();const x=Math.max(6,Math.min(W-230,q[0]+12)),y=Math.max(20,Math.min(H-10,q[1]+18));ctx.fillStyle='#101a2bee';ctx.fillRect(x-4,y-16,225,21);txt(ctx,`${label} · ${Math.round(r.z).toLocaleString('de-DE')} m`,x,y,'#fff09b',12)}
  drawSurfaceCloud(ctx,profile(state.gamma),project,W,H);refreshGraphHelp(c);
- c.dataset.verticalAxis='pressure';c.dataset.horizontalAxis='buoyancy';
+ c.dataset.verticalAxis='height';c.dataset.heightPressureTicks=JSON.stringify(heightTicks);c.dataset.horizontalAxis='buoyancy';
  document.getElementById('zoomLabel').textContent=Math.round(viewZoom*100)+' %';
  queueSaveSettings();
 }
@@ -466,7 +469,7 @@ function drawSurfaceCloud(ctx,pro,project,W,H){
  ctx.fillStyle='#11263deb';ctx.fillRect(x,y,width,height);ctx.strokeStyle='#83bdd8';ctx.lineWidth=1;ctx.strokeRect(x,y,width,height);
  ctx.canvas.dataset.cloud=hint.state;ctx.canvas.dataset.cloudForm=hint.form||'unknown';
  if(hint.base===null){txt(ctx,'LCL · Wolkenbasis nicht bestimmt',x+10,y+24*scale,'#d3e8f5',13);txt(ctx,'Im berechneten Profil nicht erreicht',x+10,y+46*scale,'#a9bfd4',12);return}
- const row=rowAtHeight(pro.rows,hint.base),q=project(state.gamma,row.p/100,row.B);
+ const row=rowAtHeight(pro.rows,hint.base),q=project(state.gamma,row.z,row.B);
  line(ctx,[[x+width,y+height/2],q],'#afd8ee88',1.2);cloudSymbol(ctx,q[0],q[1]-10,hint.state==='filled',hint.form);
  graphHelpRegions.get(ctx.canvas.id).push({x:q[0]-42,y:q[1]-48,width:84,height:60,keys:['LCL',hint.form==='cumuliform'?'Cu':'St']});
  cloudSymbol(ctx,x+43*scale,y+31*scale,hint.state==='filled',hint.form);
@@ -478,26 +481,25 @@ function drawSurfaceCloud(ctx,pro,project,W,H){
 }
 
 function stormShear(){function uv(s,d){let r=d*Math.PI/180;return [-s*Math.sin(r),-s*Math.cos(r)]}let a=uv(state.wind0,state.windDir0),b=uv(state.wind6,state.windDir6);return Math.hypot(a[0]-b[0],a[1]-b[1])}
+function heightPressureTicks(rows,top,intervals=5){
+ return Array.from({length:intervals+1},(_,i)=>{const z=top*i/intervals;return {z,pressure_hpa:z<rows[0].z||z>rows.at(-1).z?null:rowAtHeight(rows,z).p/100}});
+}
+function sampleHeightSurface(rows,gamma,top,steps,storm,lfc){
+ return Array.from({length:steps+1},(_,j)=>{
+  const z=j*top/steps;if(z>rows.at(-1).z)return null;
+  let lo=0,hi=rows.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(rows[mid].z<=z)lo=mid;else hi=mid}
+  const a=rows[lo],b=rows[hi],f=Math.max(0,Math.min(1,(z-a.z)/(b.z-a.z)));
+  return {gam:gamma,z,p:(a.p+(b.p-a.p)*f)/100,B:a.B+(b.B-a.B)*f,storm:lfc!==null&&z>=lfc?storm:0};
+ });
+}
+
 function buildMesh(){
  const nx=meshResolution,ny=Math.round(meshResolution*1.25);
  const profiles=[];
  for(let i=0;i<=nx;i++){let gam=-.2+i*1.6/nx;const pr=profile(gam),dg=diagnostics(pr);
   const shearVal=stormShear();const potential=Math.max(0,Math.min(1,(dg.cape-100)/1900))*Math.max(0,Math.min(1,(shearVal-5)/20))*Math.exp(-Math.abs(dg.cin)/200);
   profiles.push({gam,rows:pr.rows,storm:potential,lfc:dg.lfc});}
- cached=[];
- for(const {gam,rows,storm,lfc} of profiles){let arr=[];
-  for(let j=0;j<=ny;j++){
-   const pTarget=rows[0].p/100-j*(rows[0].p/100-300)/ny;
-   // No extrapolation below the model top: invalid points are masked.
-   if(pTarget<rows[rows.length-1].p/100-1e-8){arr.push(null);continue}
-   let lo=0,hi=rows.length-1;
-   while(hi-lo>1){let mid=(lo+hi)>>1;if(rows[mid].p/100>=pTarget)lo=mid;else hi=mid}
-   let a=rows[lo],b=rows[hi];
-   let f=Math.max(0,Math.min(1,(pTarget-a.p/100)/(b.p/100-a.p/100)));
-   arr.push({gam,p:pTarget,B:a.B+(b.B-a.B)*f,storm:lfc!==null&&a.z+(b.z-a.z)*f>=lfc?storm:0});
-  }
-  cached.push(arr);
- }
+ cached=profiles.map(({gam,rows,storm,lfc})=>sampleHeightSurface(rows,gam,state.top,ny,storm,lfc));
  drawSurface();
 }
 function validation(pro){

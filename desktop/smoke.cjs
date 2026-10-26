@@ -100,7 +100,8 @@ module.exports = window => {
         document.getElementById('chartCeiling').value='1828.8';document.getElementById('chartCeiling').dispatchEvent(new Event('input',{bubbles:true}));
         if(+document.getElementById('temp').dataset.top!==1828.8||document.getElementById('temp').height!==initialHeight||document.getElementById('chartCeiling').step!=='any')throw Error('Continuous display ceiling resized graph or changed height');
         document.getElementById('chartCeiling').value=focus;document.getElementById('chartCeiling').dispatchEvent(new Event('input',{bubbles:true}));
-        if(document.getElementById('surface').dataset.verticalAxis!=='pressure'||document.getElementById('surface').dataset.horizontalAxis!=='buoyancy')throw Error('3D axes not swapped');
+        if(document.getElementById('surface').dataset.verticalAxis!=='height'||document.getElementById('surface').dataset.horizontalAxis!=='buoyancy')throw Error('3D height axis missing');
+        const ticks=JSON.parse(document.getElementById('surface').dataset.heightPressureTicks);if(ticks[0].z!==0||Math.abs(ticks[0].pressure_hpa-sounding[0].p/100)>.001||ticks.at(-1).z!==state.top||!document.getElementById('surfaceHelpKeys').textContent.includes('Höhe'))throw Error('Height-pressure mapping missing');
         document.getElementById('chartZoom').value='200';document.getElementById('chartZoom').dispatchEvent(new Event('input',{bubbles:true}));
         const zoomWidth=+document.getElementById('temp').dataset.xMax-+document.getElementById('temp').dataset.xMin;
         if(Math.abs(zoomWidth-focusedWidth/2)>.001)throw Error('Horizontal zoom failed');

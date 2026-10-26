@@ -10,7 +10,7 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','adjustedSoundingPoint','graphTermKeys','graphHelpHit']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -76,8 +76,8 @@ test('chart crop interpolates its top and preserves all physical rows and diagno
 });
 
 
-test('pressure is vertical and buoyancy horizontal in the 3D geometry',()=>{
-  const base=context.surfaceCoordinates(.6,1000,0),higher=context.surfaceCoordinates(.6,500,0),positive=context.surfaceCoordinates(.6,1000,.1);
+test('geometric height is vertical and buoyancy horizontal in the 3D geometry',()=>{
+  const base=context.surfaceCoordinates(.6,0,0),higher=context.surfaceCoordinates(.6,3000,0),positive=context.surfaceCoordinates(.6,0,.1);
   assert.equal(base[0],higher[0]);assert.equal(base[1],higher[1]);assert.ok(higher[2]>base[2]);
   assert.equal(positive[0],base[0]);assert.equal(positive[2],base[2]);assert.ok(positive[1]>base[1]);
 });
@@ -125,4 +125,13 @@ test('canvas help uses word boundaries and correct hit coordinates after scaling
   assert.equal(context.graphHelpHit(regions,rect,800,900,95,135).keys[0],'LCL');
   assert.equal(context.graphHelpHit(regions,rect,800,900,20,30),null);
   assert.equal(context.graphHelpHit(regions,{...rect,width:0},800,900,65,125),null);
+});
+
+
+test('height grid pairs each level with selected profile pressure without extrapolation',()=>{
+ const rows=[{z:0,p:100000,B:-.1},{z:1000,p:90000,B:.1},{z:2000,p:80000,B:.05}],before=JSON.stringify(rows);
+ const ticks=context.heightPressureTicks(rows,3000,6);assert.equal(ticks[1].z,500);assert.equal(ticks[1].pressure_hpa,950);assert.equal(ticks.at(-1).pressure_hpa,null);
+ const mesh=context.sampleHeightSurface(rows,.65,3000,6,.8,1000);assert.equal(mesh[1].z,500);assert.equal(mesh[1].p,950);assert.equal(mesh[1].B,0);assert.equal(mesh[1].storm,0);assert.equal(mesh[2].storm,.8);assert.equal(mesh[5],null);
+ assert.equal(JSON.stringify(rows),before);
+ const a=context.surfaceCoordinates(.65,1000,0,3000),b=context.surfaceCoordinates(.65,2000,0,3000),c=context.surfaceCoordinates(.65,3000,0,3000);assert.ok(Math.abs((b[2]-a[2])-(c[2]-b[2]))<1e-12);
 });
