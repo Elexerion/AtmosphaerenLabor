@@ -10,7 +10,7 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','adjustedSoundingPoint']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','adjustedSoundingPoint','graphTermKeys','graphHelpHit']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -88,7 +88,7 @@ test('loaded profile remains exact at baseline and each thermodynamic slider cha
   vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),physics);
   vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),physics);
   vm.runInContext(script.split('\n').find(line=>line.startsWith('function interpSound(')),physics);
-  for(const name of ['adjustedSoundingPoint','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
+  for(const name of ['adjustedSoundingPoint','graphTermKeys','graphHelpHit','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
   const baseline={t0:10,td0:6,p0:993,gamma:.65,top:15000,rhDecay:2000};
   const raw=fixture().levels,base=raw[0].height_m;
   physics.sounding=raw.map(r=>({z:r.height_m-base,p:r.pressure_hpa*100,T:r.temp_c+273.15,Td:r.dewpoint_c+273.15}));
@@ -112,4 +112,17 @@ test('cloud forms remain conditional, with a stated condensation base and no inv
   assert.equal(context.cloudFormHint(pro,1000).form,'stratiform');
   const convective=context.cloudFormHint(pro,2000);assert.equal(convective.form,'cumuliform');assert.equal(convective.state,'filled');assert.equal(convective.top,undefined);
   assert.equal(context.cloudFormHint({...pro,lcl:null},3000).form,null);
+});
+
+
+test('canvas help uses word boundaries and correct hit coordinates after scaling',()=>{
+  assert.deepEqual(Array.from(context.graphTermKeys('LCL · mögliche Cu-Form')),['LCL','Cu']);
+  assert.equal(context.graphTermKeys('Modellobergrenze').length,0);
+  assert.deepEqual(Array.from(context.graphTermKeys('B=0 · 850 hPa')),['B','hPa']);
+  assert.deepEqual(Array.from(context.graphTermKeys('CAPE 100 J/kg')),['CAPE','J/kg']);
+  const regions=[{x:100,y:200,width:80,height:40,keys:['LCL']},{x:100,y:200,width:20,height:20,keys:['B']}],rect={left:10,top:20,width:400,height:450};
+  assert.equal(context.graphHelpHit(regions,rect,800,900,65,125).keys[0],'B');
+  assert.equal(context.graphHelpHit(regions,rect,800,900,95,135).keys[0],'LCL');
+  assert.equal(context.graphHelpHit(regions,rect,800,900,20,30),null);
+  assert.equal(context.graphHelpHit(regions,{...rect,width:0},800,900,65,125),null);
 });
