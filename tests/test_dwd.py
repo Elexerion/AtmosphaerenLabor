@@ -1,6 +1,9 @@
 import json
 import sys
 import unittest
+import tempfile
+from unittest.mock import patch
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import dwd_profiles as dwd
@@ -9,6 +12,37 @@ FIXTURES = Path(__file__).parent / 'fixtures'
 
 
 class DecoderTests(unittest.TestCase):
+    def test_real_schleswig_with_separate_wind_shear_replication(self):
+        meta = json.loads((FIXTURES / 'schleswig-shear.json').read_text())
+        data = (FIXTURES / 'schleswig-shear.bufr').read_bytes()
+        p, = dwd.decode(data, '10035', meta['source_url'])
+        self.assertEqual(p['message_sha256'], meta['message_sha256'])
+        self.assertEqual(p['nominal_time'], '2026-10-26T12:00:00Z')
+        self.assertEqual(len(p['levels']), 3371)
+        self.assertEqual(p['levels'][0]['pressure_hpa'], 1004.84)
+        self.assertEqual(p['levels'][-1]['pressure_hpa'], 6.03)
+        self.assertEqual(p['ascent_end']['height_m'], 33872.4)
+        self.assertEqual(p['ascent_end']['time'], '2026-10-26T12:36:50Z')
+        # Removing a pressure is still a structural error, not a license to zip
+        # unequal arrays or silently discard an arbitrary trailing observation.
+        original = dwd.array
+        with patch.object(dwd, 'array', side_effect=lambda h,k: original(h,k)[:-1] if k == 'pressure' else original(h,k)):
+            with self.assertRaisesRegex(ValueError, 'unaligned.*pressure'):
+                dwd.decode(data, '10035', meta['source_url'])
+
+    def test_collector_backfills_earlier_reporting_time(self):
+        now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+        now = now.replace(hour=12 if now.hour >= 12 else 0)
+        older = now - timedelta(hours=12)
+        links = [f'Z__C_EDZW_{t:%Y%m%d%H%M%S}_test.bin' for t in (now,older)]
+        listing = ''.join(f'<a href="{link}">file</a>' for link in links).encode()
+        profiles = [dict(nominal_time=t.strftime('%Y-%m-%dT%H:00:00Z'), levels=[dict(height_m=45.8)]) for t in (now,older)]
+        with tempfile.TemporaryDirectory() as directory, patch.object(dwd, 'download', side_effect=[listing,b'new',b'old']), patch.object(dwd, 'decode', side_effect=[[profiles[0]],[profiles[1]]]):
+            output = Path(directory)
+            dwd.collect(output, '10035')
+            for t in (now,older):
+                self.assertTrue((output / '10035' / t.strftime('%Y-%m-%d') / (t.strftime('%H')+'.json')).is_file())
+
     def test_real_schleswig(self):
         meta = json.loads((FIXTURES / 'schleswig.json').read_text())
         profiles = dwd.decode((FIXTURES / 'schleswig.bufr').read_bytes(), '10035', meta['source_url'])
