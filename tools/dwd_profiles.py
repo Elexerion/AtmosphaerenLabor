@@ -77,9 +77,32 @@ def clean_levels(heights, pressures, temperatures, dewpoints, directions=(), spe
     return clean
 
 
-def flight_endpoints(h, levels, launch):
-    heights, pressures, elapsed = (array(h, key) for key in ('nonCoordinateGeopotentialHeight', 'pressure', 'timePeriod'))
-    latitudes, longitudes = array(h, 'latitudeDisplacement'), array(h, 'longitudeDisplacement')
+def sounding_arrays(h):
+    """309057 has separate replications for ascent levels and wind-shear levels.
+
+    ecCodes flattens shared descriptors (pressure/time/position) across both.
+    Use the template's explicit replication counts, never truncate by shortest
+    array or pair a shear pressure with a thermodynamic observation.
+    """
+    count = scalar(h, '#1#extendedDelayedDescriptorReplicationFactor')
+    shear = scalar(h, '#1#delayedDescriptorReplicationFactor')
+    if count != int(count) or shear != int(shear) or not (5 <= count <= 50000 and 0 <= shear <= 50000):
+        raise ValueError('Invalid ascent/wind-shear replication counts')
+    count, shear = int(count), int(shear)
+    shared = {'pressure', 'timePeriod', 'latitudeDisplacement', 'longitudeDisplacement'}
+    keys = shared | {'nonCoordinateGeopotentialHeight', 'airTemperature', 'dewpointTemperature', 'windDirection', 'windSpeed'}
+    result = {}
+    for key in keys:
+        values = array(h, key)
+        if len(values) != count + (shear if key in shared else 0):
+            raise ValueError('Missing or unaligned ascent/wind-shear array: ' + key)
+        result[key] = values[:count]
+    return result
+
+
+def flight_endpoints(h, levels, launch, observations):
+    heights, pressures, elapsed = (observations[key] for key in ('nonCoordinateGeopotentialHeight', 'pressure', 'timePeriod'))
+    latitudes, longitudes = observations['latitudeDisplacement'], observations['longitudeDisplacement']
     base_lat, base_lon = array(h, 'latitude'), array(h, 'longitude')
     result = {}
     for key, row in (('ascent_start', levels[0]), ('ascent_end', levels[-1])):
@@ -106,9 +129,9 @@ def decode_subset(h, station, source, message):
     launch = datetime(*(int(scalar(h, k)) for k in ('year', 'month', 'day', 'hour', 'minute', 'second')), tzinfo=UTC)
     if abs((launch - nominal).total_seconds()) > 3 * 3600:
         raise ValueError('Launch differs from reporting time by more than 3 hours')
-    rows = clean_levels(array(h, 'nonCoordinateGeopotentialHeight'), array(h, 'pressure'),
-                        array(h, 'airTemperature'), array(h, 'dewpointTemperature'),
-                        array(h, 'windDirection'), array(h, 'windSpeed'))
+    observations = sounding_arrays(h)
+    rows = clean_levels(*(observations[key] for key in ('nonCoordinateGeopotentialHeight', 'pressure',
+                        'airTemperature', 'dewpointTemperature', 'windDirection', 'windSpeed')))
     ground = scalar(h, 'heightOfStationGroundAboveMeanSeaLevel')
     if abs(rows[0]['height_m'] - ground) > 100:
         raise ValueError('Profile does not start near station ground')
@@ -118,7 +141,7 @@ def decode_subset(h, station, source, message):
                 retrieved_at=datetime.now(UTC).isoformat().replace('+00:00', 'Z'),
                 source_url=source, message_sha256=hashlib.sha256(message).hexdigest(),
                 template=309057, height_reference='geopotential metres MSL',
-                station_height_m=ground, levels=rows, **flight_endpoints(h,rows,launch))
+                station_height_m=ground, levels=rows, **flight_endpoints(h,rows,launch,observations))
 
 
 def decode(data, station, source):
@@ -166,7 +189,7 @@ def download(url):
     return data
 
 
-def collect(output, station, limit=240, cache=None):
+def collect(output, station, limit=480, cache=None):
     links = sorted(set(re.findall(r'href="(Z__C_EDZW_\d{14}[^"/]+\.bin)"', download(BASE).decode())), reverse=True)
     errors, found = [], {}
     cutoff = datetime.now(UTC) - timedelta(hours=30)
@@ -183,8 +206,8 @@ def collect(output, station, limit=240, cache=None):
         except (OSError, ValueError, ec.CodesInternalError) as exc:
             errors.append(dict(file=unquote(link), error=str(exc)))
             print(f'Skipping {unquote(link)}: {exc}', file=sys.stderr, flush=True)
-        # Latest complete ascent is sufficient; scheduled runs preserve earlier profiles.
-        if found: break
+        # Inspect the whole bounded window: an earlier run may have missed a
+        # reporting time. Finding the latest ascent must not prevent backfill.
     if not found:
         raise RuntimeError(f'No verified ascent for WMO {station}; inspected up to {limit} files; errors={len(errors)}')
     for profile in found.values():
@@ -202,7 +225,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=Path('profiles'))
     parser.add_argument('--station', default='10035', choices=['10035'])
-    parser.add_argument('--limit', type=int, default=240)
+    parser.add_argument('--limit', type=int, default=480)
     parser.add_argument('--cache', type=Path)
     args = parser.parse_args()
     if args.cache: args.cache.mkdir(parents=True, exist_ok=True)
