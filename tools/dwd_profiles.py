@@ -189,7 +189,7 @@ def download(url):
     return data
 
 
-def collect(output, station, limit=240, cache=None):
+def collect(output, station, limit=480, cache=None):
     links = sorted(set(re.findall(r'href="(Z__C_EDZW_\d{14}[^"/]+\.bin)"', download(BASE).decode())), reverse=True)
     errors, found = [], {}
     cutoff = datetime.now(UTC) - timedelta(hours=30)
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=Path('profiles'))
     parser.add_argument('--station', default='10035', choices=['10035'])
-    parser.add_argument('--limit', type=int, default=240)
+    parser.add_argument('--limit', type=int, default=480)
     parser.add_argument('--cache', type=Path)
     args = parser.parse_args()
     if args.cache: args.cache.mkdir(parents=True, exist_ok=True)
