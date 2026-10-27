@@ -10,7 +10,7 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit','learningTopics','learningText','matchingLearningTopics']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -88,7 +88,7 @@ test('loaded profile remains exact at baseline and each thermodynamic slider cha
   vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),physics);
   vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),physics);
   vm.runInContext(script.split('\n').find(line=>line.startsWith('function interpSound(')),physics);
-  for(const name of ['adjustedSoundingPoint','graphTermKeys','graphHelpHit','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
+  for(const name of ['adjustedSoundingPoint','graphTermKeys','graphHelpHit','learningTopics','learningText','matchingLearningTopics','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
   const baseline={t0:10,td0:6,p0:993,gamma:.65,top:15000,rhDecay:2000};
   const raw=fixture().levels,base=raw[0].height_m;
   physics.sounding=raw.map(r=>({z:r.height_m-base,p:r.pressure_hpa*100,T:r.temp_c+273.15,Td:r.dewpoint_c+273.15}));
@@ -134,4 +134,30 @@ test('height grid pairs each level with selected profile pressure without extrap
  const mesh=context.sampleHeightSurface(rows,.65,3000,6,.8,1000);assert.equal(mesh[1].z,500);assert.equal(mesh[1].p,950);assert.equal(mesh[1].B,0);assert.equal(mesh[1].storm,0);assert.equal(mesh[2].storm,.8);assert.equal(mesh[5],null);
  assert.equal(JSON.stringify(rows),before);
  const a=context.surfaceCoordinates(.65,1000,0,3000),b=context.surfaceCoordinates(.65,2000,0,3000),c=context.surfaceCoordinates(.65,3000,0,3000);assert.ok(Math.abs((b[2]-a[2])-(c[2]-b[2]))<1e-12);
+});
+
+
+test('learning help covers every weather and display setting and searches across German wording',()=>{
+ const topics=context.learningTopics(),ids=topics.map(t=>t.id),targets=new Set(topics.flatMap(t=>t.targets));
+ assert.equal(new Set(ids).size,ids.length);assert.ok(topics.filter(t=>t.group==='practice').every(t=>t.steps.length>=3));
+ const definition=script.slice(script.indexOf('const defs=')+'const defs='.length,script.indexOf(';let state={}'));
+ const controls=vm.runInContext('('+definition+')',context).map(d=>d[0]);
+ for(const id of [...controls,'chartCeiling','chartZoom','chartText','perspective','focal','mesh','smoothSurface','lighting','specular','stormColors','showThresholds','textSize','placeInput','stationSelect','launchDate','launchHour','loadSounding','soundingFile','soundingOff','reset','fullView','viewReset','zoomIn','zoomOut'])assert.ok(targets.has(id),'Missing learning help: '+id);
+ assert.ok(context.matchingLearningTopics(topics,'all','TAUPUNKT').some(t=>t.id==='td0'));
+ assert.ok(context.matchingLearningTopics(topics,'view','TEXTGRÖSSE').some(t=>t.id==='chartText'));
+ assert.ok(context.matchingLearningTopics(topics,'weather','Bodentemperatur Taupunkt').some(t=>t.id==='t0'));
+ assert.equal(context.matchingLearningTopics(topics,'all','xyz123unbekannt').length,0);
+ for(const t of topics){assert.ok(t.sections.every(section=>section.text.length>30),t.id);if(t.source)assert.equal(new URL(t.source).protocol,'https:')}
+});
+
+test('learning exercises match the ideal model without claiming all changes increase CAPE',()=>{
+ const physics=vm.createContext({console});
+ vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),physics);
+ vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),physics);
+ for(const name of ['profile','diagnostics'])vm.runInContext(extract(name),physics);
+ physics.sounding=null;const initial={t0:15,td0:8,p0:1013,gamma:.65,top:9000,rhDecay:2000,lift:0,wind0:5,wind6:25};physics.state={...initial};
+ const before=physics.profile(.65);physics.state.td0=12;assert.ok(physics.profile(.65).lcl<before.lcl);
+ physics.state={...initial,t0:20};assert.ok(physics.profile(.65).lcl>before.lcl);
+ physics.state={...initial};assert.ok(physics.profile(.95).rows[150].B>physics.profile(.45).rows[150].B);
+ physics.state={...initial,lift:3000,wind0:20,wind6:30};assert.equal(JSON.stringify(physics.profile(.65)),JSON.stringify(before));
 });

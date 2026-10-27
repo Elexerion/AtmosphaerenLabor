@@ -125,6 +125,30 @@ module.exports = window => {
       if(!mobile.inside||mobile.width>390||mobile.height>844)throw Error('Small viewport overflow: '+JSON.stringify(mobile));
       await fs.writeFile(path.join(output,'windows-mobile.png'),(await window.webContents.capturePage()).toPNG());
       await fs.writeFile(path.join(output,'layout-checks.json'),JSON.stringify({closed,mobile},null,2));
+      window.setContentSize(1440,1000);
+      const learning=await window.webContents.executeJavaScript(`(()=>{
+        const original=JSON.stringify({state,sounding,cached}),dialog=document.getElementById('learningHelp');
+        document.querySelector('#sliders [data-learning-topic="t0"]').click();
+        if(!dialog.open||!document.getElementById('learn-t0').open||!dialog.textContent.includes('nicht automatisch mehr CAPE'))throw Error('Weather learning help did not open');
+        const search=document.getElementById('learningSearch');search.value='Taupunkt';search.dispatchEvent(new Event('input',{bubbles:true}));
+        if(document.getElementById('learningGroup').value!=='all'||!document.getElementById('learn-td0'))throw Error('Learning search failed');
+        search.value='xyz123unbekannt';search.dispatchEvent(new Event('input',{bubbles:true}));if(!document.getElementById('learningResults').textContent.includes('Kein passendes Thema'))throw Error('Empty learning search missing');
+        openLearningTopic('t0');document.querySelector('#learn-t0 .learnTarget').click();if(dialog.open||document.activeElement.id!=='t0')throw Error('Learning control navigation failed');
+        const perspectiveBefore=document.getElementById('perspective').checked;document.querySelector('[data-learning-topic="perspective"]').click();if(!dialog.open||document.getElementById('perspective').checked!==perspectiveBefore)throw Error('Learning button toggled weather/view control');dialog.close();
+        const full=document.getElementById('surfacePanel');if(!full.classList.contains('fullview'))document.getElementById('fullView').click();openLearningTopic('overview');document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));
+        if(!full.classList.contains('fullview'))throw Error('Learning Escape closed 3D fullscreen');dialog.dispatchEvent(new Event('cancel',{cancelable:true}));if(dialog.open)throw Error('Learning cancel failed');document.getElementById('fullView').click();
+        if(JSON.stringify({state,sounding,cached})!==original)throw Error('Reading learning help changed weather or measurements');
+        openLearningTopic('t0');return {topics:learningTopics().length,weather:learningTopics().filter(t=>t.group==='weather').length,exercises:learningTopics().filter(t=>t.group==='practice').length};
+      })()`);
+      await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+      await fs.writeFile(path.join(output,'learning-desktop.png'),(await window.webContents.capturePage()).toPNG());
+      await fs.writeFile(path.join(output,'learning-checks.json'),JSON.stringify(learning,null,2));
+      window.setContentSize(390,844);
+      await window.webContents.executeJavaScript("openLearningTopic('gamma');new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
+      const learningMobile=await window.webContents.executeJavaScript("(()=>{const d=document.getElementById('learningHelp'),r=d.getBoundingClientRect();return {width:r.width,height:r.height,inside:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,overflow:d.scrollWidth>d.clientWidth+1}})()");
+      if(!learningMobile.inside||learningMobile.overflow)throw Error('Learning mobile overflow: '+JSON.stringify(learningMobile));
+      await fs.writeFile(path.join(output,'learning-mobile.png'),(await window.webContents.capturePage()).toPNG());
+      await window.webContents.executeJavaScript("document.getElementById('closeLearning').click()");
       await window.webContents.executeJavaScript(`(()=>{
         document.getElementById('soundingOff').click();
         state.t0=25;render();document.getElementById('reset').click();
