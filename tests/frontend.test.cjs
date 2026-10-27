@@ -12,7 +12,7 @@ function extract(name) {
 const context=vm.createContext({URL,Date,console});
 vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),context);
 vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),context);
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit','compareStabilityGradient','saturatedStabilityGradient','stabilityLayers','stabilityDescription','referenceTemperatureLines','learningTopics','learningText','matchingLearningTopics']) vm.runInContext(extract(name),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit','compareStabilityGradient','saturatedStabilityGradient','stabilityLayers','stabilityDescription','referenceTemperatureLines','explanatoryAbbreviations','buildAbbreviationMatcher','explanatoryAbbreviationMatches','learningTopics','learningText','matchingLearningTopics']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -183,4 +183,24 @@ test('reference lines use a common start, exact requested gradients and a bounde
  assert.equal(refs.find(r=>r.id==='moist').points[1].Tc,0);assert.equal(refs.find(r=>r.id==='icao').points[1].Tc,-4.5);assert.equal(refs.find(r=>r.id==='dry').points[1].Tc,-15);
  assert.equal(context.referenceTemperatureLines(rows,15000,46).find(r=>r.id==='icao').points[1].z,10954);
  const all=context.horizontalChartRange(rows,'temp',1,null,[-135]),plain=context.horizontalChartRange(rows,'temp',1,null);assert.ok(all.min<plain.min);assert.equal(JSON.stringify(rows),before);
+});
+
+
+test('explanatory abbreviations have English and German definitions and cover all learning acronyms',()=>{
+ const entries=context.explanatoryAbbreviations(),byKey=new Map(entries.map(e=>[e.key,e]));assert.equal(entries.length,byKey.size);
+ for(const e of entries){assert.ok(e.english.trim());assert.ok(e.german.trim());assert.ok(e.aliases.length)}
+ for(const key of ['CAPE','CIN','LCL','LFC','EL','ICAO','ISA','MSL','UTC','DWD','WMO','NOAA','NWS','BUFR','CSV','HTTPS','U','G','u','v','Cu','St','hPa','J/kg','m/s²','ft','bzw.','z. B.','ecCodes','MetPy'])assert.ok(byKey.has(key),key);
+ const prose=context.learningTopics().map(t=>t.title+' '+t.sections.map(s=>s.text).join(' ')+' '+t.steps.join(' ')).join(' ');
+ for(const acronym of new Set(prose.match(/\b[A-Z]{2,}\b/g)||[]))assert.ok(byKey.has(acronym),'Unexplained learning acronym '+acronym);
+ assert.equal(byKey.get('ICAO').english,'International Civil Aviation Organization');assert.equal(byKey.get('MSL').german,'Mittlerer Meeresspiegel');
+});
+
+test('text abbreviation matching preserves compounds, units, whitespace and ordinary words',()=>{
+ const matcher=context.buildAbbreviationMatcher(context.explanatoryAbbreviations()),keys=text=>Array.from(context.explanatoryAbbreviationMatches(text,matcher),m=>m.key);
+ assert.deepEqual(keys('CAPE/CIN, LCL und ICAO-Gefälle; MSL-Höhe.'),['CAPE','CIN','LCL','ICAO','MSL']);
+ assert.deepEqual(keys('20km bei 0 °C, 3 m/s², 4 m/s und 100 J/kg.'),['km','°C','m/s²','m/s','J/kg']);
+ assert.deepEqual(keys('z.B. bzw. z. B. und z.\u00a0B.'),['z. B.','bzw.','z. B.','z. B.']);
+ assert.deepEqual(keys('Wolkenbasis und Stimmung im konstanten Klima. DWDaten.'),[]);
+ const text='MSL, dann MSL.',matches=context.explanatoryAbbreviationMatches(text,matcher);assert.equal(matches.length,2);for(const m of matches)assert.equal(text.slice(m.start,m.end),m.text);
+ const escaped=context.buildAbbreviationMatcher([{key:'test',aliases:['A+B'],kind:'abbreviation'}]);assert.equal(context.explanatoryAbbreviationMatches('A+B',escaped).length,1);assert.equal(context.explanatoryAbbreviationMatches('AAAB',escaped).length,0);
 });
