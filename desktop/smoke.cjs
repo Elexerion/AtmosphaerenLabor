@@ -13,16 +13,16 @@ module.exports = window => {
         const t=document.getElementById('textSize');t.value='125';t.dispatchEvent(new Event('input',{bubbles:true}));
         state.wind0=12;document.getElementById('wind0').value='12';
         document.getElementById('smoothSurface').checked=false;
-        document.getElementById('chartCeiling').value='2500';document.getElementById('chartText').value='140';document.getElementById('chartZoom').value='170';
+        document.getElementById('chartCeiling').value='2500';document.getElementById('chartText').value='140';document.getElementById('chartZoom').value='170';document.getElementById('referenceProfiles').checked=false;
         az=-.7;viewZoom=.9;saveSettings();
       })()`);
       await new Promise(resolve=>{window.webContents.once('did-finish-load',resolve);window.webContents.reload()});
-      const restored=await window.webContents.executeJavaScript(`({lightPower,textScale,az,viewZoom,wind:state.wind0,smooth:document.getElementById('smoothSurface').checked,open:!document.getElementById('viewportSettings').hidden,chartCeiling:+document.getElementById('chartCeiling').value,chartText:+document.getElementById('chartText').value,chartZoom:+document.getElementById('chartZoom').value})`);
-      if(restored.lightPower!==.55||restored.textScale!==1.25||restored.az!==-.7||restored.viewZoom!==.9||restored.wind!==12||restored.smooth!==false||!restored.open||restored.chartCeiling!==2500||restored.chartText!==140||restored.chartZoom!==170)throw Error('Settings not restored: '+JSON.stringify(restored));
+      const restored=await window.webContents.executeJavaScript(`({lightPower,textScale,az,viewZoom,wind:state.wind0,smooth:document.getElementById('smoothSurface').checked,open:!document.getElementById('viewportSettings').hidden,chartCeiling:+document.getElementById('chartCeiling').value,chartText:+document.getElementById('chartText').value,chartZoom:+document.getElementById('chartZoom').value,references:document.getElementById('referenceProfiles').checked})`);
+      if(restored.lightPower!==.55||restored.textScale!==1.25||restored.az!==-.7||restored.viewZoom!==.9||restored.wind!==12||restored.smooth!==false||!restored.open||restored.chartCeiling!==2500||restored.chartText!==140||restored.chartZoom!==170||restored.references!==false)throw Error('Settings not restored: '+JSON.stringify(restored));
       await window.webContents.executeJavaScript(`(()=>{
         document.getElementById('lighting').value='75';document.getElementById('lighting').dispatchEvent(new Event('input',{bubbles:true}));
         document.getElementById('textSize').value='100';document.getElementById('textSize').dispatchEvent(new Event('input',{bubbles:true}));
-        document.getElementById('chartCeiling').value='15000';document.getElementById('chartText').value='100';document.getElementById('chartZoom').value='100';
+        document.getElementById('chartCeiling').value='15000';document.getElementById('chartText').value='100';document.getElementById('chartZoom').value='100';document.getElementById('referenceProfiles').checked=true;
         document.getElementById('viewportSettings').hidden=true;resetView();
       })()`);
       const profile=JSON.parse(await fs.readFile(app.commandLine.getSwitchValue('smoke-fixture'),'utf8'));
@@ -47,6 +47,12 @@ module.exports = window => {
         if(JSON.stringify(profile(state.gamma))===baselineProfile||JSON.stringify(cached)===baselineMesh)throw Error('Loaded profile sliders did not change calculations');
         document.getElementById('reset').click();
         if(JSON.stringify(state)!==baselineState||JSON.stringify(profile(state.gamma))!==baselineProfile||JSON.stringify(cached)!==baselineMesh||sliders.dataset.origin!=='sounding'||JSON.stringify(sounding)!==sourceRows)throw Error('Original sounding not restored exactly');
+        const stableMetrics=document.getElementById('metrics').textContent,stableRows=JSON.stringify(sounding),stableProfile=JSON.stringify(profile(state.gamma));
+        if(document.getElementById('temp').dataset.referenceCount!=='3'||!document.getElementById('tempStability').textContent.includes('Ungesättigt')||!document.getElementById('surfaceStability').textContent.includes('Schichtung'))throw Error('Stability/reference annotations missing');
+        const comparison=document.getElementById('referenceProfiles');comparison.checked=false;comparison.dispatchEvent(new Event('input',{bubbles:true}));
+        if(document.getElementById('temp').dataset.referenceCount!=='0'||!document.getElementById('referenceLegend').hidden)throw Error('Reference toggle failed');
+        comparison.checked=true;comparison.dispatchEvent(new Event('input',{bubbles:true}));
+        if(document.getElementById('metrics').textContent!==stableMetrics||JSON.stringify(sounding)!==stableRows||JSON.stringify(profile(state.gamma))!==stableProfile)throw Error('Stability/reference display changed physics');
         const savedLift=state.lift;state.lift=0;render();
         if(document.getElementById('temp').dataset.cloud!=='outline'||document.getElementById('buoy').dataset.cloud!=='outline')throw Error('Unreached LCL cloud must be hollow');
         state.lift=3000;render();
@@ -153,6 +159,9 @@ module.exports = window => {
         document.getElementById('soundingOff').click();
         state.t0=25;render();document.getElementById('reset').click();
         if(sounding!==null||sliders.dataset.origin!=='custom'||!document.getElementById('reset').textContent.includes('Grundeinstellungen')||defs.some(([id,,value])=>state[id]!==value))throw Error('Ideal defaults not restored');
+        const gradient=document.getElementById('gamma');gradient.value='1.2';gradient.dispatchEvent(new Event('input',{bubbles:true}));if(document.getElementById('temp').dataset.stability!=='unstable'||document.getElementById('buoy').dataset.stability!=='unstable')throw Error('Labile classification did not update');
+        gradient.value='-0.1';gradient.dispatchEvent(new Event('input',{bubbles:true}));if(document.getElementById('temp').dataset.stability!=='stable'||document.getElementById('buoy').dataset.stability!=='stable')throw Error('Stable inversion did not update');document.getElementById('reset').click();
+
       })()`);
       clearTimeout(timeout);app.exit(0);
     } catch(error) {console.error(error);clearTimeout(timeout);app.exit(1)}

@@ -10,7 +10,9 @@ function extract(name) {
   return script.slice(start,tail);
 }
 const context=vm.createContext({URL,Date,console});
-for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit','learningTopics','learningText','matchingLearningTopics']) vm.runInContext(extract(name),context);
+vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),context);
+vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),context);
+for(const name of ['parseSoundingRows','csvToRows','dwdToRows','smoothSurfaceMesh','diagnostics','rowAtHeight','chartLandmarks','arrangeCallouts','flightEndpointInfo','cloudScenario','cloudSymbol','cloudFormHint','visibleChartRows','freezingPoints','lowerChartFocus','horizontalChartRange','surfaceCoordinates','heightPressureTicks','sampleHeightSurface','adjustedSoundingPoint','graphTermKeys','graphHelpHit','compareStabilityGradient','saturatedStabilityGradient','stabilityLayers','stabilityDescription','referenceTemperatureLines','learningTopics','learningText','matchingLearningTopics']) vm.runInContext(extract(name),context);
 const fixture=()=>JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/profile.json'),'utf8'));
 test('clouds fill only when saturation is reached; outline never paints a fill',()=>{
   const rows=[{z:0,B:-.01},{z:1000,B:-.02}],profile={rows,lcl:500};
@@ -88,7 +90,7 @@ test('loaded profile remains exact at baseline and each thermodynamic slider cha
   vm.runInContext(script.slice(script.indexOf('const g='),script.indexOf('\nconst defs=')),physics);
   vm.runInContext(script.slice(script.indexOf('function es('),script.indexOf('// Pseudoadiabatic')),physics);
   vm.runInContext(script.split('\n').find(line=>line.startsWith('function interpSound(')),physics);
-  for(const name of ['adjustedSoundingPoint','graphTermKeys','graphHelpHit','learningTopics','learningText','matchingLearningTopics','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
+  for(const name of ['adjustedSoundingPoint','graphTermKeys','graphHelpHit','compareStabilityGradient','saturatedStabilityGradient','stabilityLayers','stabilityDescription','referenceTemperatureLines','learningTopics','learningText','matchingLearningTopics','soundingEnvironment','profile','diagnostics'])vm.runInContext(extract(name),physics);
   const baseline={t0:10,td0:6,p0:993,gamma:.65,top:15000,rhDecay:2000};
   const raw=fixture().levels,base=raw[0].height_m;
   physics.sounding=raw.map(r=>({z:r.height_m-base,p:r.pressure_hpa*100,T:r.temp_c+273.15,Td:r.dewpoint_c+273.15}));
@@ -116,9 +118,9 @@ test('cloud forms remain conditional, with a stated condensation base and no inv
 
 
 test('canvas help uses word boundaries and correct hit coordinates after scaling',()=>{
-  assert.deepEqual(Array.from(context.graphTermKeys('LCL · mögliche Cu-Form')),['LCL','Cu']);
+  assert.deepEqual(Array.from(context.graphTermKeys('LCL Â· mÃ¶gliche Cu-Form')),['LCL','Cu']);
   assert.equal(context.graphTermKeys('Modellobergrenze').length,0);
-  assert.deepEqual(Array.from(context.graphTermKeys('B=0 · 850 hPa')),['B','hPa']);
+  assert.deepEqual(Array.from(context.graphTermKeys('B=0 Â· 850 hPa')),['B','hPa']);
   assert.deepEqual(Array.from(context.graphTermKeys('CAPE 100 J/kg')),['CAPE','J/kg']);
   const regions=[{x:100,y:200,width:80,height:40,keys:['LCL']},{x:100,y:200,width:20,height:20,keys:['B']}],rect={left:10,top:20,width:400,height:450};
   assert.equal(context.graphHelpHit(regions,rect,800,900,65,125).keys[0],'B');
@@ -142,7 +144,7 @@ test('learning help covers every weather and display setting and searches across
  assert.equal(new Set(ids).size,ids.length);assert.ok(topics.filter(t=>t.group==='practice').every(t=>t.steps.length>=3));
  const definition=script.slice(script.indexOf('const defs=')+'const defs='.length,script.indexOf(';let state={}'));
  const controls=vm.runInContext('('+definition+')',context).map(d=>d[0]);
- for(const id of [...controls,'chartCeiling','chartZoom','chartText','perspective','focal','mesh','smoothSurface','lighting','specular','stormColors','showThresholds','textSize','placeInput','stationSelect','launchDate','launchHour','loadSounding','soundingFile','soundingOff','reset','fullView','viewReset','zoomIn','zoomOut'])assert.ok(targets.has(id),'Missing learning help: '+id);
+ for(const id of [...controls,'referenceProfiles','chartCeiling','chartZoom','chartText','perspective','focal','mesh','smoothSurface','lighting','specular','stormColors','showThresholds','textSize','placeInput','stationSelect','launchDate','launchHour','loadSounding','soundingFile','soundingOff','reset','fullView','viewReset','zoomIn','zoomOut'])assert.ok(targets.has(id),'Missing learning help: '+id);
  assert.ok(context.matchingLearningTopics(topics,'all','TAUPUNKT').some(t=>t.id==='td0'));
  assert.ok(context.matchingLearningTopics(topics,'view','TEXTGRÃ–SSE').some(t=>t.id==='chartText'));
  assert.ok(context.matchingLearningTopics(topics,'weather','Bodentemperatur Taupunkt').some(t=>t.id==='t0'));
@@ -160,4 +162,25 @@ test('learning exercises match the ideal model without claiming all changes incr
  physics.state={...initial,t0:20};assert.ok(physics.profile(.65).lcl>before.lcl);
  physics.state={...initial};assert.ok(physics.profile(.95).rows[150].B>physics.profile(.45).rows[150].B);
  physics.state={...initial,lift:3000,wind0:20,wind6:30};assert.equal(JSON.stringify(physics.profile(.65)),JSON.stringify(before));
+});
+
+
+test('layer stability distinguishes dry and saturated displacement, neutral limits and inversions',()=>{
+ const row=(z,Te,p)=>({z,Te,p,T:Te,Td:Te-5,B:0}),pair=gamma=>[row(0,288.15,100000),row(500,288.15-gamma*5,95000)];
+ assert.equal(context.stabilityLayers(pair(-.2),500)[0].type,'stable');
+ const conditional=context.stabilityLayers(pair(.65),500)[0];assert.equal(conditional.dry,'stable');assert.equal(conditional.moist,'unstable');assert.equal(conditional.type,'conditional');
+ assert.equal(context.stabilityLayers(pair(1.2),500)[0].type,'unstable');
+ const dry=9.80665/1004*100;assert.equal(context.stabilityLayers(pair(dry),500)[0].dry,'neutral');assert.equal(context.compareStabilityGradient(1,dry),'neutral');
+ const midT=288.15,moist=context.saturatedStabilityGradient(midT,97500),neutralMoist=[row(0,midT+moist*2.5,100000),row(500,midT-moist*2.5,95000)];assert.equal(context.stabilityLayers(neutralMoist,500)[0].moist,'neutral');
+ assert.ok(context.saturatedStabilityGradient(250,60000)>context.saturatedStabilityGradient(295,100000));
+ assert.equal(context.saturatedStabilityGradient(330,10000),null);
+ const mixed=[...pair(.65),row(1000,285.9,90000)],before=JSON.stringify(mixed),layers=context.stabilityLayers(mixed,750);assert.equal(layers.at(-1).hi,750);assert.equal(context.stabilityDescription(layers).key,'mixed');assert.equal(JSON.stringify(mixed),before);
+});
+
+test('reference lines use a common start, exact requested gradients and a bounded ICAO segment',()=>{
+ const rows=[{z:0,Te:288.15,T:288.15,Td:280,p:100000,B:0},{z:15000,Te:220,T:219,Td:210,p:12000,B:-.1}],before=JSON.stringify(rows);
+ const refs=context.referenceTemperatureLines(rows,3000);assert.equal(refs.length,3);for(const r of refs)assert.equal(r.points[0].Tc,15);
+ assert.equal(refs.find(r=>r.id==='moist').points[1].Tc,0);assert.equal(refs.find(r=>r.id==='icao').points[1].Tc,-4.5);assert.equal(refs.find(r=>r.id==='dry').points[1].Tc,-15);
+ assert.equal(context.referenceTemperatureLines(rows,15000,46).find(r=>r.id==='icao').points[1].z,10954);
+ const all=context.horizontalChartRange(rows,'temp',1,null,[-135]),plain=context.horizontalChartRange(rows,'temp',1,null);assert.ok(all.min<plain.min);assert.equal(JSON.stringify(rows),before);
 });
