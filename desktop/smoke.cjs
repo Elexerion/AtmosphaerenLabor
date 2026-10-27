@@ -69,6 +69,14 @@ module.exports = window => {
         helpCanvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:hx,clientY:hy,pointerType:'touch',bubbles:true}));helpCanvas.dispatchEvent(new PointerEvent('pointerup',{clientX:hx,clientY:hy,pointerType:'touch',bubbles:true}));
         if(tip.hidden||!graphHelpPinned)throw Error('Touch tooltip missing');hideGraphTooltip();
         const keyButton=[...document.querySelectorAll('#tempHelpKeys button')].find(b=>b.textContent==='LCL');keyButton.focus();keyButton.dispatchEvent(new FocusEvent('focus'));if(tip.hidden||!tip.textContent.includes('Kondensationsniveau')||document.activeElement!==keyButton)throw Error('Keyboard tooltip missing');keyButton.blur();hideGraphTooltip();window.scrollTo(0,0);
+        textAbbreviationRoots.add(document.body);flushTextAbbreviationHelp();
+        const annotationCount=document.querySelectorAll('[data-text-abbr]').length;decorateExplanatoryText(document.body);decorateExplanatoryText(document.body);
+        if(document.querySelectorAll('[data-text-abbr]').length!==annotationCount||document.querySelector('[data-text-abbr] [data-text-abbr]'))throw Error('Abbreviation decoration is not idempotent');
+        const bodyMSL=document.querySelector('#buoyCloudNote [data-text-abbr="MSL"]');if(!bodyMSL)throw Error('Dynamic explanatory abbreviation missing');
+        bodyMSL.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));
+        const abbreviationTip=document.getElementById('abbrTooltip');if(abbreviationTip.hidden||!abbreviationTip.textContent.includes('Mean Sea Level')||!abbreviationTip.textContent.includes('Mittlerer Meeresspiegel'))throw Error('Bilingual hover tooltip missing');hideTextAbbreviationTooltip();
+        const dynamicNote=document.createElement('p');dynamicNote.hidden=true;dynamicNote.textContent='CAPE/CIN und ICAO bzw. ISA, UTC und WMO.';document.querySelector('footer').append(dynamicNote);await new Promise(resolve=>setTimeout(resolve,160));
+        if(dynamicNote.querySelectorAll('[data-text-abbr]').length!==7)throw Error('New explanation did not receive automatic tooltips '+JSON.stringify({count:dynamicNote.querySelectorAll('[data-text-abbr]').length,html:dynamicNote.innerHTML,pending:[...textAbbreviationRoots].map(e=>e.id||e.tagName)}));dynamicNote.remove();
         const originalMesh=JSON.stringify(cached),originalProfile=JSON.stringify(sounding),originalMetrics=document.getElementById('metrics').textContent;
         document.getElementById('smoothSurface').checked=false;drawSurface();
         document.getElementById('smoothSurface').checked=true;drawSurface();
@@ -144,16 +152,34 @@ module.exports = window => {
         const full=document.getElementById('surfacePanel');if(!full.classList.contains('fullview'))document.getElementById('fullView').click();openLearningTopic('overview');document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));
         if(!full.classList.contains('fullview'))throw Error('Learning Escape closed 3D fullscreen');dialog.dispatchEvent(new Event('cancel',{cancelable:true}));if(dialog.open)throw Error('Learning cancel failed');document.getElementById('fullView').click();
         if(JSON.stringify({state,sounding,cached})!==original)throw Error('Reading learning help changed weather or measurements');
+        openLearningTopic('referenceProfiles');
+        const modalTerm=document.querySelector('#learn-referenceProfiles [data-text-abbr="ICAO"]');if(!modalTerm)throw Error('Learning abbreviation missing');modalTerm.click();
+        const abbreviationTip=document.getElementById('abbrTooltip');if(abbreviationTip.hidden||!abbreviationTip.textContent.includes('International Civil Aviation Organization')||!abbreviationTip.textContent.includes('Internationale Zivilluftfahrtorganisation')||abbreviationTip.parentElement!==dialog)throw Error('Bilingual tooltip inside learning dialog missing');
+        if(typeof abbreviationTip.showPopover==='function'&&!abbreviationTip.matches(':popover-open'))throw Error('Abbreviation tooltip not above dialog');
+        modalTerm.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));if(!abbreviationTip.hidden||!dialog.open)throw Error('Nested Escape closed learning dialog');
+        modalTerm.focus();modalTerm.dispatchEvent(new FocusEvent('focusin',{bubbles:true}));if(abbreviationTip.hidden)throw Error('Abbreviation keyboard focus missing');hideTextAbbreviationTooltip();modalTerm.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));if(abbreviationTip.hidden)throw Error('Abbreviation keyboard activation missing');
+        abbreviationTip.querySelector('.abbrClose').click();if(!abbreviationTip.hidden||!dialog.open)throw Error('Abbreviation close button failed');
+        const sourceLink=document.querySelector('#learn-referenceProfiles a'),sourceURL=sourceLink.href,sourceHelp=sourceLink.nextElementSibling;if(!sourceHelp?.classList.contains('abbrLinkHelp'))throw Error('Source acronym help missing');sourceHelp.click();if(!abbreviationTip.textContent.includes('Federal Aviation Administration')||sourceLink.href!==sourceURL)throw Error('Source link bilingual help failed');hideTextAbbreviationTooltip();
+        if(JSON.stringify({state,sounding,cached})!==original)throw Error('Abbreviation explanations changed weather data');
         openLearningTopic('t0');return {topics:learningTopics().length,weather:learningTopics().filter(t=>t.group==='weather').length,exercises:learningTopics().filter(t=>t.group==='practice').length};
       })()`);
       await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
       await fs.writeFile(path.join(output,'learning-desktop.png'),(await window.webContents.capturePage()).toPNG());
       await fs.writeFile(path.join(output,'learning-checks.json'),JSON.stringify(learning,null,2));
+      await window.webContents.executeJavaScript("openLearningTopic('referenceProfiles');document.querySelector('#learn-referenceProfiles [data-text-abbr=ICAO]').click()");
+      await fs.writeFile(path.join(output,'bilingual-learning.png'),(await window.webContents.capturePage()).toPNG());
+      await window.webContents.executeJavaScript('hideTextAbbreviationTooltip()');
+
       window.setContentSize(390,844);
       await window.webContents.executeJavaScript("openLearningTopic('gamma');new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
       const learningMobile=await window.webContents.executeJavaScript("(()=>{const d=document.getElementById('learningHelp'),r=d.getBoundingClientRect();return {width:r.width,height:r.height,inside:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,overflow:d.scrollWidth>d.clientWidth+1}})()");
       if(!learningMobile.inside||learningMobile.overflow)throw Error('Learning mobile overflow: '+JSON.stringify(learningMobile));
       await fs.writeFile(path.join(output,'learning-mobile.png'),(await window.webContents.capturePage()).toPNG());
+      await window.webContents.executeJavaScript("const mobileTerm=document.querySelector('#learn-gamma [data-text-abbr=LFC]')||document.querySelector('#learn-gamma [data-text-abbr]');mobileTerm.click()");
+      const popupMobile=await window.webContents.executeJavaScript("(()=>{const tip=document.getElementById('abbrTooltip'),r=tip.getBoundingClientRect();return {visible:!tip.hidden,inside:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight}})()");if(!popupMobile.visible||!popupMobile.inside)throw Error('Bilingual mobile tooltip overflow');
+      await fs.writeFile(path.join(output,'bilingual-mobile.png'),(await window.webContents.capturePage()).toPNG());
+      await window.webContents.executeJavaScript('hideTextAbbreviationTooltip()');
+
       await window.webContents.executeJavaScript("document.getElementById('closeLearning').click()");
       await window.webContents.executeJavaScript(`(()=>{
         document.getElementById('soundingOff').click();
@@ -164,6 +190,6 @@ module.exports = window => {
 
       })()`);
       clearTimeout(timeout);app.exit(0);
-    } catch(error) {console.error(error);clearTimeout(timeout);app.exit(1)}
+    } catch(error) {console.error(error,JSON.stringify(errors));clearTimeout(timeout);app.exit(1)}
   });
 };
